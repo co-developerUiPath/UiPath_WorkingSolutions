@@ -1,0 +1,26 @@
+>> mkdir example
+>> cd example
+>> python -m venv myenv
+>> myenv\Scripts\activate
+>> python -m pip install --upgrade pip
+>> pip install langchain-anthropic
+>> pip install uipath-langchain
+>> uipath -lv
+>> uipath auth | uipath auth --staging
+>> uipath new my-agent
+>> uipath init
+>> Set Up Environment Variables : OPENAI_API_KEY / ANTHROPIC_API_KEY
+>> Create Input.json - {"topic": "UiPath"}
+>> uipath run agent --file input.json
+
+from uipath_langchain.chat.models import UiPathAzureChatOpenAI
+
+async def generate_report(state: GraphState) -> GraphOutput:
+    llm_model = UiPathAzureChatOpenAI(
+        model="gpt-4o-2024-08-06",
+        temperature=0,
+        max_tokens=4000,
+        timeout=30,
+        max_retries=2,
+        # other params...
+    )
