@@ -1,0 +1,69 @@
+{
+  "DisplayName": "Image Resizer",
+  "Tooltip": null,
+  "HelpLink": null,
+  "Color": null,
+  "OriginalIconFileName": null,
+  "Arguments": [
+    {
+      "Name": "in_ImagePath",
+      "DisplayName": "in_ImagePath",
+      "Category": null,
+      "Tooltip": null,
+      "Placeholder": "SampleImage1.jpg",
+      "Widget": null,
+      "IsRequired": false,
+      "IsPrincipal": true,
+      "ArgumentType": 0,
+      "DataSourceItems": null
+    },
+    {
+      "Name": "in_Height",
+      "DisplayName": "in_Height",
+      "Category": null,
+      "Tooltip": null,
+      "Placeholder": "200",
+      "Widget": null,
+      "IsRequired": false,
+      "IsPrincipal": true,
+      "ArgumentType": 0,
+      "DataSourceItems": null
+    },
+    {
+      "Name": "in_Width",
+      "DisplayName": "in_Width",
+      "Category": null,
+      "Tooltip": null,
+      "Placeholder": "200",
+      "Widget": null,
+      "IsRequired": false,
+      "IsPrincipal": true,
+      "ArgumentType": 0,
+      "DataSourceItems": null
+    },
+    {
+      "Name": "in_OutputImagePathWithExtension",
+      "DisplayName": "in_OutputImagePathWithExtension",
+      "Category": null,
+      "Tooltip": null,
+      "Placeholder": "ResizedImage.jpg",
+      "Widget": null,
+      "IsRequired": false,
+      "IsPrincipal": true,
+      "ArgumentType": 0,
+      "DataSourceItems": null
+    },
+    {
+      "Name": "out_ExecutionResultMessage",
+      "DisplayName": "out_ExecutionResultMessage",
+      "Category": null,
+      "Tooltip": null,
+      "Placeholder": null,
+      "Widget": null,
+      "IsRequired": false,
+      "IsPrincipal": true,
+      "ArgumentType": 0,
+      "DataSourceItems": null
+    }
+  ]
+}

@@ -1,0 +1,81 @@
+{
+  "DisplayName": "Validate Image Hexacode",
+  "Tooltip": null,
+  "HelpLink": null,
+  "Color": null,
+  "OriginalIconFileName": null,
+  "Arguments": [
+    {
+      "Name": "in_ImagePath",
+      "DisplayName": "in_ImagePath",
+      "Category": null,
+      "Tooltip": "Input file path",
+      "Placeholder": "SampleImage1.jpg",
+      "Widget": null,
+      "IsRequired": false,
+      "IsPrincipal": true,
+      "ArgumentType": 0,
+      "DataSourceItems": null
+    },
+    {
+      "Name": "in_SerachHexacode",
+      "DisplayName": "in_SerachHexacode",
+      "Category": null,
+      "Tooltip": "Provide the hex code value to look into the extracted hex code.",
+      "Placeholder": null,
+      "Widget": null,
+      "IsRequired": false,
+      "IsPrincipal": true,
+      "ArgumentType": 0,
+      "DataSourceItems": null
+    },
+    {
+      "Name": "out_HexacodeOccurences",
+      "DisplayName": "out_HexacodeOccurences",
+      "Category": null,
+      "Tooltip": "Occurence of provided hexacode value count",
+      "Placeholder": null,
+      "Widget": null,
+      "IsRequired": false,
+      "IsPrincipal": true,
+      "ArgumentType": 0,
+      "DataSourceItems": null
+    },
+    {
+      "Name": "out_HexacodeFound",
+      "DisplayName": "out_HexacodeFound",
+      "Category": null,
+      "Tooltip": "Result of proved hexacode, True or False.",
+      "Placeholder": null,
+      "Widget": null,
+      "IsRequired": false,
+      "IsPrincipal": true,
+      "ArgumentType": 0,
+      "DataSourceItems": null
+    },
+    {
+      "Name": "out_ExecutionResultMessage",
+      "DisplayName": "out_ExecutionResultMessage",
+      "Category": null,
+      "Tooltip": "Execution result output message",
+      "Placeholder": null,
+      "Widget": null,
+      "IsRequired": false,
+      "IsPrincipal": true,
+      "ArgumentType": 0,
+      "DataSourceItems": null
+    },
+    {
+      "Name": "out_ListOfHexaCodeValues",
+      "DisplayName": "out_ListOfHexaCodeValues",
+      "Category": null,
+      "Tooltip": "List of exracted hexacode",
+      "Placeholder": null,
+      "Widget": null,
+      "IsRequired": false,
+      "IsPrincipal": true,
+      "ArgumentType": 0,
+      "DataSourceItems": null
+    }
+  ]
+}

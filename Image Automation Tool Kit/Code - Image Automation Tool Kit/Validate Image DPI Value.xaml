@@ -1,0 +1,181 @@
+<Activity mc:Ignorable="sap sap2010" x:Class="Image_DPI_Check" this:Image_DPI_Check.in_ImagePath="SampleImage1.jpg" xmlns="http://schemas.microsoft.com/netfx/2009/xaml/activities" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:s="clr-namespace:System;assembly=System.Private.CoreLib" xmlns:sap="http://schemas.microsoft.com/netfx/2009/xaml/activities/presentation" xmlns:sap2010="http://schemas.microsoft.com/netfx/2010/xaml/activities/presentation" xmlns:scg="clr-namespace:System.Collections.Generic;assembly=System.Private.CoreLib" xmlns:sco="clr-namespace:System.Collections.ObjectModel;assembly=System.Private.CoreLib" xmlns:this="clr-namespace:" xmlns:ui="http://schemas.uipath.com/workflow/activities" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <x:Members>
+    <x:Property sap2010:Annotation.AnnotationText="Image file path" Name="in_ImagePath" Type="InArgument(x:String)" />
+    <x:Property sap2010:Annotation.AnnotationText="Caclulated Image DPI Value" Name="out_ImageDPIValue" Type="OutArgument(x:Int32)" />
+    <x:Property sap2010:Annotation.AnnotationText="Image Size (Width &amp; Height)" Name="out_ImageSize" Type="OutArgument(x:String)" />
+    <x:Property sap2010:Annotation.AnnotationText="Image Height" Name="out_ImageHeightPixel" Type="OutArgument(x:String)" />
+    <x:Property sap2010:Annotation.AnnotationText="Image Width" Name="out_ImageWidthPixel" Type="OutArgument(x:String)" />
+    <x:Property sap2010:Annotation.AnnotationText="Image Horizontal Resolution" Name="out_HorizontalResolution" Type="OutArgument(x:String)" />
+    <x:Property sap2010:Annotation.AnnotationText="Image Vertical Resulution" Name="out_VerticalResoluiton" Type="OutArgument(x:String)" />
+    <x:Property sap2010:Annotation.AnnotationText="Exectution result output message" Name="out_ExecutionResultMessage" Type="OutArgument(x:String)" />
+  </x:Members>
+  <VisualBasic.Settings>
+    <x:Null />
+  </VisualBasic.Settings>
+  <sap:VirtualizedContainerService.HintSize>761.6,840</sap:VirtualizedContainerService.HintSize>
+  <sap2010:WorkflowViewState.IdRef>Image_DPI_Check_1</sap2010:WorkflowViewState.IdRef>
+  <TextExpression.NamespacesForImplementation>
+    <sco:Collection x:TypeArguments="x:String">
+      <x:String>System.Activities</x:String>
+      <x:String>System.Activities.Statements</x:String>
+      <x:String>System.Activities.Expressions</x:String>
+      <x:String>System.Activities.Validation</x:String>
+      <x:String>System.Activities.XamlIntegration</x:String>
+      <x:String>Microsoft.VisualBasic</x:String>
+      <x:String>Microsoft.VisualBasic.Activities</x:String>
+      <x:String>System</x:String>
+      <x:String>System.Collections</x:String>
+      <x:String>System.Collections.Generic</x:String>
+      <x:String>System.Collections.ObjectModel</x:String>
+      <x:String>System.Data</x:String>
+      <x:String>System.Diagnostics</x:String>
+      <x:String>System.Drawing</x:String>
+      <x:String>System.IO</x:String>
+      <x:String>System.Linq</x:String>
+      <x:String>System.Net.Mail</x:String>
+      <x:String>System.Xml</x:String>
+      <x:String>System.Xml.Linq</x:String>
+      <x:String>UiPath.Core</x:String>
+      <x:String>UiPath.Core.Activities</x:String>
+      <x:String>System.Windows.Markup</x:String>
+      <x:String>System.Runtime.Serialization</x:String>
+      <x:String>System.Reflection</x:String>
+      <x:String>System.Activities.Runtime.Collections</x:String>
+      <x:String>System.Linq.Expressions</x:String>
+      <x:String>System.Numerics</x:String>
+    </sco:Collection>
+  </TextExpression.NamespacesForImplementation>
+  <TextExpression.ReferencesForImplementation>
+    <sco:Collection x:TypeArguments="AssemblyReference">
+      <AssemblyReference>Microsoft.VisualBasic</AssemblyReference>
+      <AssemblyReference>mscorlib</AssemblyReference>
+      <AssemblyReference>System</AssemblyReference>
+      <AssemblyReference>System.Activities</AssemblyReference>
+      <AssemblyReference>System.ComponentModel.TypeConverter</AssemblyReference>
+      <AssemblyReference>System.Core</AssemblyReference>
+      <AssemblyReference>System.Data</AssemblyReference>
+      <AssemblyReference>System.Data.Common</AssemblyReference>
+      <AssemblyReference>System.Data.DataSetExtensions</AssemblyReference>
+      <AssemblyReference>System.Drawing</AssemblyReference>
+      <AssemblyReference>System.Drawing.Common</AssemblyReference>
+      <AssemblyReference>System.Drawing.Primitives</AssemblyReference>
+      <AssemblyReference>System.Linq</AssemblyReference>
+      <AssemblyReference>System.Net.Mail</AssemblyReference>
+      <AssemblyReference>System.ObjectModel</AssemblyReference>
+      <AssemblyReference>System.Private.CoreLib</AssemblyReference>
+      <AssemblyReference>System.Xaml</AssemblyReference>
+      <AssemblyReference>System.Xml</AssemblyReference>
+      <AssemblyReference>System.Xml.Linq</AssemblyReference>
+      <AssemblyReference>UiPath.System.Activities</AssemblyReference>
+      <AssemblyReference>UiPath.UiAutomation.Activities</AssemblyReference>
+      <AssemblyReference>UiPath.Studio.Constants</AssemblyReference>
+      <AssemblyReference>System.Private.ServiceModel</AssemblyReference>
+      <AssemblyReference>System.Runtime.Serialization.Formatters</AssemblyReference>
+      <AssemblyReference>System.Private.DataContractSerialization</AssemblyReference>
+      <AssemblyReference>System.Runtime.Serialization.Primitives</AssemblyReference>
+      <AssemblyReference>System.Reflection.DispatchProxy</AssemblyReference>
+      <AssemblyReference>System.Reflection.TypeExtensions</AssemblyReference>
+      <AssemblyReference>System.Reflection.Metadata</AssemblyReference>
+      <AssemblyReference>System.Console</AssemblyReference>
+      <AssemblyReference>System.Security.Permissions</AssemblyReference>
+      <AssemblyReference>System.Configuration.ConfigurationManager</AssemblyReference>
+      <AssemblyReference>System.ComponentModel</AssemblyReference>
+      <AssemblyReference>System.Memory</AssemblyReference>
+      <AssemblyReference>System.Private.Uri</AssemblyReference>
+      <AssemblyReference>System.Collections</AssemblyReference>
+      <AssemblyReference>System.Collections.NonGeneric</AssemblyReference>
+      <AssemblyReference>System.Linq.Expressions</AssemblyReference>
+      <AssemblyReference>System.Runtime.Numerics</AssemblyReference>
+    </sco:Collection>
+  </TextExpression.ReferencesForImplementation>
+  <Sequence sap2010:Annotation.AnnotationText="The process will take the image input path and perform calculations to determine the DPI (dots per inch) value based on the image's height, width, and file size. This functionality will streamline the developer's task of validating the DPI value of images." DisplayName="Validate Image DPI Value" sap:VirtualizedContainerService.HintSize="598.4,775.2" sap2010:WorkflowViewState.IdRef="Sequence_1">
+    <sap:WorkflowViewStateService.ViewState>
+      <scg:Dictionary x:TypeArguments="x:String, x:Object">
+        <x:Boolean x:Key="IsExpanded">True</x:Boolean>
+        <x:Boolean x:Key="IsAnnotationDocked">True</x:Boolean>
+      </scg:Dictionary>
+    </sap:WorkflowViewStateService.ViewState>
+    <TryCatch DisplayName="Try Catch - ValidateImageDPIValue" sap:VirtualizedContainerService.HintSize="536,626.4" sap2010:WorkflowViewState.IdRef="TryCatch_1">
+      <TryCatch.Try>
+        <Sequence DisplayName="Try" sap:VirtualizedContainerService.HintSize="496,770.4" sap2010:WorkflowViewState.IdRef="Sequence_2">
+          <sap:WorkflowViewStateService.ViewState>
+            <scg:Dictionary x:TypeArguments="x:String, x:Object">
+              <x:Boolean x:Key="IsExpanded">True</x:Boolean>
+            </scg:Dictionary>
+          </sap:WorkflowViewStateService.ViewState>
+          <ui:InvokeCode ContinueOnError="{x:Null}" sap2010:Annotation.AnnotationText="System.Drawing Namespace is Required" Code="Dim dpiCalculation As Integer&#xA;Dim image As System.Drawing.Image = System.Drawing.Image.FromFile(imagePath)&#xA;Dim horizontalResolution As Single = image.HorizontalResolution&#xA;Dim verticalResolution As Single = image.VerticalResolution&#xA;dpiCalculation = CInt((horizontalResolution + verticalResolution) / 2)&#xA;HorResolution = CStr(horizontalResolution)&#xA;VerResolution = CStr(verticalResolution)&#xA;dpi = dpiCalculation&#xA;Width = CStr(image.Width)&#xA;Height = CStr(image.Height)&#xA;Size = CStr(image.Size.ToString)" DisplayName="Invoke Code - Image DPI Check" sap:VirtualizedContainerService.HintSize="433.6,228" sap2010:WorkflowViewState.IdRef="InvokeCode_1">
+            <ui:InvokeCode.Arguments>
+              <InArgument x:TypeArguments="x:String" x:Key="imagePath">
+                <VisualBasicValue x:TypeArguments="x:String" ExpressionText="in_ImagePath" />
+              </InArgument>
+              <OutArgument x:TypeArguments="x:Int32" x:Key="dpi">
+                <VisualBasicReference x:TypeArguments="x:Int32" ExpressionText="out_ImageDPIValue" />
+              </OutArgument>
+              <OutArgument x:TypeArguments="x:String" x:Key="HorResolution">
+                <VisualBasicReference x:TypeArguments="x:String" ExpressionText="out_HorizontalResolution" />
+              </OutArgument>
+              <OutArgument x:TypeArguments="x:String" x:Key="VerResolution">
+                <VisualBasicReference x:TypeArguments="x:String" ExpressionText="out_VerticalResoluiton" />
+              </OutArgument>
+              <OutArgument x:TypeArguments="x:String" x:Key="Width">
+                <VisualBasicReference x:TypeArguments="x:String" ExpressionText="out_ImageWidthPixel" />
+              </OutArgument>
+              <OutArgument x:TypeArguments="x:String" x:Key="Height">
+                <VisualBasicReference x:TypeArguments="x:String" ExpressionText="out_ImageHeightPixel" />
+              </OutArgument>
+              <OutArgument x:TypeArguments="x:String" x:Key="Size">
+                <VisualBasicReference x:TypeArguments="x:String" ExpressionText="out_ImageSize" />
+              </OutArgument>
+            </ui:InvokeCode.Arguments>
+            <sap:WorkflowViewStateService.ViewState>
+              <scg:Dictionary x:TypeArguments="x:String, x:Object">
+                <x:Boolean x:Key="IsAnnotationDocked">True</x:Boolean>
+              </scg:Dictionary>
+            </sap:WorkflowViewStateService.ViewState>
+          </ui:InvokeCode>
+          <ui:LogMessage DisplayName="Log Message - Image DPI Value" sap:VirtualizedContainerService.HintSize="433.6,174.4" sap2010:WorkflowViewState.IdRef="LogMessage_1" Level="[UiPath.Core.Activities.LogLevel.Info]" Message="[&quot;Image DPI Value : &quot;+out_ImageDPIValue.ToString+Environment.NewLine+&#xA;&quot;H.Resolution : &quot;+out_HorizontalResolution+&quot; | &quot;+&#xA;&quot;V.ertical Resolution : &quot;+out_VerticalResoluiton]" />
+          <ui:LogMessage DisplayName="Log Message - Image Width &amp; Height" sap:VirtualizedContainerService.HintSize="433.6,174.4" sap2010:WorkflowViewState.IdRef="LogMessage_2" Level="[UiPath.Core.Activities.LogLevel.Info]" Message="[&quot;Width : &quot;+out_ImageWidthPixel+Environment.NewLine+&quot;Height : &quot;+out_ImageHeightPixel+Environment.NewLine+&quot;Size : &quot;+out_ImageSize.ToString]" />
+          <Assign DisplayName="Assign - ValidateImageDPIValuet_Execution Message Success" sap:VirtualizedContainerService.HintSize="433.6,104.8" sap2010:WorkflowViewState.IdRef="Assign_3">
+            <Assign.To>
+              <OutArgument x:TypeArguments="x:String">[out_ExecutionResultMessage]</OutArgument>
+            </Assign.To>
+            <Assign.Value>
+              <InArgument x:TypeArguments="x:String">Execution completed successfully.</InArgument>
+            </Assign.Value>
+          </Assign>
+        </Sequence>
+      </TryCatch.Try>
+      <TryCatch.Catches>
+        <Catch x:TypeArguments="s:Exception" sap:VirtualizedContainerService.HintSize="502.4,439.2" sap2010:WorkflowViewState.IdRef="Catch`1_1">
+          <sap:WorkflowViewStateService.ViewState>
+            <scg:Dictionary x:TypeArguments="x:String, x:Object">
+              <x:Boolean x:Key="IsExpanded">True</x:Boolean>
+              <x:Boolean x:Key="IsPinned">False</x:Boolean>
+            </scg:Dictionary>
+          </sap:WorkflowViewStateService.ViewState>
+          <ActivityAction x:TypeArguments="s:Exception">
+            <ActivityAction.Argument>
+              <DelegateInArgument x:TypeArguments="s:Exception" Name="exception" />
+            </ActivityAction.Argument>
+            <Sequence DisplayName="Catch - ValidateImageDPIValue" sap:VirtualizedContainerService.HintSize="496,368" sap2010:WorkflowViewState.IdRef="Sequence_3">
+              <sap:WorkflowViewStateService.ViewState>
+                <scg:Dictionary x:TypeArguments="x:String, x:Object">
+                  <x:Boolean x:Key="IsExpanded">True</x:Boolean>
+                </scg:Dictionary>
+              </sap:WorkflowViewStateService.ViewState>
+              <ui:LogMessage DisplayName="Log Message  - Execution Exception" sap:VirtualizedContainerService.HintSize="433.6,174.4" sap2010:WorkflowViewState.IdRef="LogMessage_3" Level="Error" Message="[&quot;Exception :&quot;+exception.Message.ToString]" />
+              <Assign DisplayName="Assign - ValidateImageDPIValue_Execution Message Failure" sap:VirtualizedContainerService.HintSize="433.6,104.8" sap2010:WorkflowViewState.IdRef="Assign_2">
+                <Assign.To>
+                  <OutArgument x:TypeArguments="x:String">[out_ExecutionResultMessage]</OutArgument>
+                </Assign.To>
+                <Assign.Value>
+                  <InArgument x:TypeArguments="x:String">["Exception Message : "+exception.Message.ToString]</InArgument>
+                </Assign.Value>
+              </Assign>
+            </Sequence>
+          </ActivityAction>
+        </Catch>
+      </TryCatch.Catches>
+    </TryCatch>
+  </Sequence>
+</Activity>

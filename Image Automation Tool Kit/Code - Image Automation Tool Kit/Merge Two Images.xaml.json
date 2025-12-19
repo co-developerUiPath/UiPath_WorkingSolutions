@@ -1,0 +1,57 @@
+{
+  "DisplayName": "Merge Two Images",
+  "Tooltip": null,
+  "HelpLink": null,
+  "Color": null,
+  "OriginalIconFileName": null,
+  "Arguments": [
+    {
+      "Name": "in_ImagePath1",
+      "DisplayName": "in_ImagePath1",
+      "Category": null,
+      "Tooltip": "First image path",
+      "Placeholder": "SampleImage1.jpg",
+      "Widget": null,
+      "IsRequired": false,
+      "IsPrincipal": true,
+      "ArgumentType": 0,
+      "DataSourceItems": null
+    },
+    {
+      "Name": "in_ImagePath2",
+      "DisplayName": "in_ImagePath2",
+      "Category": null,
+      "Tooltip": "Second image path",
+      "Placeholder": "SampleImage2.jpg",
+      "Widget": null,
+      "IsRequired": false,
+      "IsPrincipal": true,
+      "ArgumentType": 0,
+      "DataSourceItems": null
+    },
+    {
+      "Name": "in_MergedFileNameWithPath",
+      "DisplayName": "in_MergedFileNameWithPath",
+      "Category": null,
+      "Tooltip": "Complete path along with file name and extension",
+      "Placeholder": "C:\\Users\\mkhan\\Downloads\\SampleImage0.jpg",
+      "Widget": null,
+      "IsRequired": false,
+      "IsPrincipal": true,
+      "ArgumentType": 0,
+      "DataSourceItems": null
+    },
+    {
+      "Name": "out_ExecutionResultMessage",
+      "DisplayName": "out_ExecutionResultMessage",
+      "Category": null,
+      "Tooltip": "Extraction result output message",
+      "Placeholder": null,
+      "Widget": null,
+      "IsRequired": false,
+      "IsPrincipal": true,
+      "ArgumentType": 0,
+      "DataSourceItems": null
+    }
+  ]
+}

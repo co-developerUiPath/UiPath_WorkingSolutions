@@ -1,0 +1,57 @@
+{
+  "DisplayName": "Compare Two Image Pixel By Pixel",
+  "Tooltip": null,
+  "HelpLink": null,
+  "Color": null,
+  "OriginalIconFileName": null,
+  "Arguments": [
+    {
+      "Name": "in_ImagePath1",
+      "DisplayName": "in_ImagePath1",
+      "Category": null,
+      "Tooltip": null,
+      "Placeholder": "SampleImage1.jpg",
+      "Widget": null,
+      "IsRequired": false,
+      "IsPrincipal": true,
+      "ArgumentType": 0,
+      "DataSourceItems": null
+    },
+    {
+      "Name": "in_ImagePath2",
+      "DisplayName": "in_ImagePath2",
+      "Category": null,
+      "Tooltip": null,
+      "Placeholder": "SampleImage2.jpg",
+      "Widget": null,
+      "IsRequired": false,
+      "IsPrincipal": true,
+      "ArgumentType": 0,
+      "DataSourceItems": null
+    },
+    {
+      "Name": "out_ExecutionResultMessage",
+      "DisplayName": "out_ExecutionResultMessage",
+      "Category": null,
+      "Tooltip": null,
+      "Placeholder": null,
+      "Widget": null,
+      "IsRequired": false,
+      "IsPrincipal": true,
+      "ArgumentType": 0,
+      "DataSourceItems": null
+    },
+    {
+      "Name": "out_ComparisonResult",
+      "DisplayName": "out_ComparisonResult",
+      "Category": null,
+      "Tooltip": null,
+      "Placeholder": null,
+      "Widget": null,
+      "IsRequired": false,
+      "IsPrincipal": true,
+      "ArgumentType": 0,
+      "DataSourceItems": null
+    }
+  ]
+}

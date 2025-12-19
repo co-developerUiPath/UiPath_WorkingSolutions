@@ -1,0 +1,105 @@
+{
+  "DisplayName": "Image DPI Check",
+  "Tooltip": null,
+  "HelpLink": null,
+  "Color": null,
+  "OriginalIconFileName": null,
+  "Arguments": [
+    {
+      "Name": "in_ImagePath",
+      "DisplayName": "in_ImagePath",
+      "Category": null,
+      "Tooltip": "Image file path",
+      "Placeholder": "SampleImage1.jpg",
+      "Widget": null,
+      "IsRequired": false,
+      "IsPrincipal": true,
+      "ArgumentType": 0,
+      "DataSourceItems": null
+    },
+    {
+      "Name": "out_ImageDPIValue",
+      "DisplayName": "out_ImageDPIValue",
+      "Category": null,
+      "Tooltip": "Caclulated Image DPI Value",
+      "Placeholder": null,
+      "Widget": null,
+      "IsRequired": false,
+      "IsPrincipal": true,
+      "ArgumentType": 0,
+      "DataSourceItems": null
+    },
+    {
+      "Name": "out_ImageSize",
+      "DisplayName": "out_ImageSize",
+      "Category": null,
+      "Tooltip": "Image Size (Width & Height)",
+      "Placeholder": null,
+      "Widget": null,
+      "IsRequired": false,
+      "IsPrincipal": true,
+      "ArgumentType": 0,
+      "DataSourceItems": null
+    },
+    {
+      "Name": "out_ImageHeightPixel",
+      "DisplayName": "out_ImageHeightPixel",
+      "Category": null,
+      "Tooltip": "Image Height",
+      "Placeholder": null,
+      "Widget": null,
+      "IsRequired": false,
+      "IsPrincipal": true,
+      "ArgumentType": 0,
+      "DataSourceItems": null
+    },
+    {
+      "Name": "out_ImageWidthPixel",
+      "DisplayName": "out_ImageWidthPixel",
+      "Category": null,
+      "Tooltip": "Image Width",
+      "Placeholder": null,
+      "Widget": null,
+      "IsRequired": false,
+      "IsPrincipal": true,
+      "ArgumentType": 0,
+      "DataSourceItems": null
+    },
+    {
+      "Name": "out_HorizontalResolution",
+      "DisplayName": "out_HorizontalResolution",
+      "Category": null,
+      "Tooltip": "Image Horizontal Resolution",
+      "Placeholder": null,
+      "Widget": null,
+      "IsRequired": false,
+      "IsPrincipal": true,
+      "ArgumentType": 0,
+      "DataSourceItems": null
+    },
+    {
+      "Name": "out_VerticalResoluiton",
+      "DisplayName": "out_VerticalResoluiton",
+      "Category": null,
+      "Tooltip": "Image Vertical Resulution",
+      "Placeholder": null,
+      "Widget": null,
+      "IsRequired": false,
+      "IsPrincipal": true,
+      "ArgumentType": 0,
+      "DataSourceItems": null
+    },
+    {
+      "Name": "out_ExecutionResultMessage",
+      "DisplayName": "out_ExecutionResultMessage",
+      "Category": null,
+      "Tooltip": "Exectution result output message",
+      "Placeholder": null,
+      "Widget": null,
+      "IsRequired": false,
+      "IsPrincipal": true,
+      "ArgumentType": 0,
+      "DataSourceItems": null
+    }
+  ]
+}

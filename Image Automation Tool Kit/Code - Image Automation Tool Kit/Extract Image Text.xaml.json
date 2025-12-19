@@ -1,0 +1,105 @@
+{
+  "DisplayName": "Extract Image Text",
+  "Tooltip": null,
+  "HelpLink": null,
+  "Color": null,
+  "OriginalIconFileName": null,
+  "Arguments": [
+    {
+      "Name": "in_ImagePath",
+      "DisplayName": "in_ImagePath",
+      "Category": null,
+      "Tooltip": "Input image path",
+      "Placeholder": "SampleImage2.jpg",
+      "Widget": null,
+      "IsRequired": false,
+      "IsPrincipal": true,
+      "ArgumentType": 0,
+      "DataSourceItems": null
+    },
+    {
+      "Name": "in_APIKey",
+      "DisplayName": "in_APIKey",
+      "Category": null,
+      "Tooltip": "API key for better extraction result",
+      "Placeholder": null,
+      "Widget": null,
+      "IsRequired": false,
+      "IsPrincipal": true,
+      "ArgumentType": 0,
+      "DataSourceItems": null
+    },
+    {
+      "Name": "in_RegexPattern",
+      "DisplayName": "in_RegexPattern",
+      "Category": null,
+      "Tooltip": "Regex pattern to find the desired text",
+      "Placeholder": "\\bLearn(?:\\s*UiPath)?\\b(?!.*\\bAutomation\\b)",
+      "Widget": null,
+      "IsRequired": false,
+      "IsPrincipal": true,
+      "ArgumentType": 0,
+      "DataSourceItems": null
+    },
+    {
+      "Name": "in_EndpointURL",
+      "DisplayName": "in_EndpointURL",
+      "Category": null,
+      "Tooltip": "OCR Endpoint Path",
+      "Placeholder": "https://ocr.uipath.com",
+      "Widget": null,
+      "IsRequired": false,
+      "IsPrincipal": true,
+      "ArgumentType": 0,
+      "DataSourceItems": null
+    },
+    {
+      "Name": "out_ExtractedText",
+      "DisplayName": "out_ExtractedText",
+      "Category": null,
+      "Tooltip": "Extracted text from image",
+      "Placeholder": null,
+      "Widget": null,
+      "IsRequired": false,
+      "IsPrincipal": true,
+      "ArgumentType": 0,
+      "DataSourceItems": null
+    },
+    {
+      "Name": "out_RegexResults",
+      "DisplayName": "out_RegexResults",
+      "Category": null,
+      "Tooltip": "Extraction Results",
+      "Placeholder": null,
+      "Widget": null,
+      "IsRequired": false,
+      "IsPrincipal": true,
+      "ArgumentType": 0,
+      "DataSourceItems": null
+    },
+    {
+      "Name": "out_RegexResultFirstMatch",
+      "DisplayName": "out_RegexResultFirstMatch",
+      "Category": null,
+      "Tooltip": "First match of regex result",
+      "Placeholder": null,
+      "Widget": null,
+      "IsRequired": false,
+      "IsPrincipal": true,
+      "ArgumentType": 0,
+      "DataSourceItems": null
+    },
+    {
+      "Name": "out_ExecutionResultMessage",
+      "DisplayName": "out_ExecutionResultMessage",
+      "Category": null,
+      "Tooltip": "Exraction result or output message",
+      "Placeholder": null,
+      "Widget": null,
+      "IsRequired": false,
+      "IsPrincipal": true,
+      "ArgumentType": 0,
+      "DataSourceItems": null
+    }
+  ]
+}
