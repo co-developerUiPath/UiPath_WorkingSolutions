@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Local JSON Visualizer (Drag + Theme Toggle)</title>
+
+  <!-- Link your CSS file here -->
+  <!-- <link rel="stylesheet" href="styles.css"> -->
+</head>
+<body>
+  <div class="jsonviz-app">
+    <header class="jsonviz-header">
+      <div class="jsonviz-header-left">
+        <div class="jsonviz-logo"></div>
+        <div class="jsonviz-title">
+          <div class="jsonviz-pill">
+            <span class="jsonviz-pill-dot"></span>
+            Co-developer | Your AI Companion
+          </div>
+          <div class="jsonviz-h1">JSON Visualizer <span class="jsonviz-sub">— local & offline</span></div>
+          <div class="jsonviz-subtitle">Paste JSON on the left, drag nodes on the right.</div>
+        </div>
+      </div>
+
+      <div class="jsonviz-header-right">
+        <div class="jsonviz-chip">
+          <span class="jsonviz-chip-dot"></span>
+          Local-only · No network calls
+        </div>
+
+        <div class="jsonviz-zoom">
+          <label for="zoomRange">Zoom</label>
+          <input id="zoomRange" type="range" min="40" max="160" value="100" />
+          <span id="zoomLabel">100%</span>
+        </div>
+
+        <!-- Chatbot logo button -->
+        <button class="jsonviz-btn jsonviz-btn-secondary" id="btnChatbotLogo" type="button" title="Open Chatbot" aria-label="Open Chatbot">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+            <path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+
+        <button class="jsonviz-btn jsonviz-btn-secondary" id="btnThemeToggle" type="button">🌙 Dark</button>
+      </div>
+    </header>
+
+    <main class="jsonviz-main">
+      <!-- Left -->
+      <section class="jsonviz-panel">
+        <div class="jsonviz-panel-header">
+          <div class="jsonviz-panel-header-left">
+            <div class="jsonviz-dots"><span></span><span></span><span></span></div>
+            <div class="jsonviz-panel-title">JSON INPUT</div>
+          </div>
+          <div class="jsonviz-panel-header-right">
+            <button class="jsonviz-btn jsonviz-btn-secondary" id="btnFormat">⭮ Format</button>
+            <button class="jsonviz-btn jsonviz-btn-secondary" id="btnSample">★ Sample</button>
+            <button class="jsonviz-btn jsonviz-btn-secondary" id="btnClear">✕ Clear</button>
+          </div>
+        </div>
+
+        <div class="jsonviz-panel-body">
+          <div class="jsonviz-editor">
+            <div class="jsonviz-editor-toolbar">
+              <div class="jsonviz-label">Editor</div>
+              <div id="editorStatus" class="jsonviz-status jsonviz-status-error">
+                <span class="jsonviz-status-dot"></span>
+                <span id="editorStatusText">Waiting for JSON…</span>
+              </div>
+            </div>
+
+            <textarea id="jsonInput" spellcheck="false" placeholder='{
+  "name": "Json Visualizer",
+  "version": 1,
+  "features": ["graph", "drag", "local"],
+  "meta": { "author": "You", "offline": true }
+}'></textarea>
+
+            <div class="jsonviz-editor-footer">
+              <div class="jsonviz-meta">
+                <span>Lines: <b id="lineCount">0</b></span>
+                <span>Chars: <b id="charCount">0</b></span>
+              </div>
+              <div class="jsonviz-error" id="errorText"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right -->
+      <section class="jsonviz-panel">
+        <div class="jsonviz-panel-header">
+          <div class="jsonviz-panel-header-left">
+            <div class="jsonviz-dots"><span></span><span></span><span></span></div>
+            <div class="jsonviz-panel-title">GRAPH VIEW</div>
+          </div>
+          <div class="jsonviz-panel-header-right">
+            <button class="jsonviz-btn jsonviz-btn-secondary" id="btnCenter">⊕ Center</button>
+            <button class="jsonviz-btn jsonviz-btn-secondary" id="btnExportSvg">⬇ SVG</button>
+          </div>
+        </div>
+
+        <div class="jsonviz-panel-body">
+          <div class="jsonviz-graph">
+            <div class="jsonviz-graph-toolbar">
+              <div class="jsonviz-label">Drag nodes to rearrange</div>
+              <div class="jsonviz-meta">
+                <span>Nodes: <b id="nodeCount">0</b></span>
+                <span>Depth: <b id="maxDepth">0</b></span>
+              </div>
+            </div>
+
+            <div class="jsonviz-scroll" id="graphScroll">
+              <div class="jsonviz-inner" id="graphInner">
+                <svg class="jsonviz-svg" id="graphSvg">
+                  <g id="linksGroup"></g>
+                  <g id="nodesGroup"></g>
+                </svg>
+
+                <div class="jsonviz-empty" id="graphEmpty">
+                  <div class="jsonviz-empty-icon">🌌</div>
+                  <div class="jsonviz-empty-title">No graph yet</div>
+                  <div class="jsonviz-empty-sub">
+                    Paste valid JSON (or click <b>Sample</b>) to generate nodes.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div class="jsonviz-footer">Developer by : Co-developer & Mohd Faiz Khan.</div>
+
+    <!-- Chatbot iframe container -->
+    <div id="chatbotContainer" class="chatbot-container" aria-hidden="true" style="display:none;">
+      <div class="chatbot-header">
+        <div class="chatbot-title">Co-developer ChatBot</div>
+        <button id="btnCloseChatbot" class="chatbot-close" aria-label="Close chatbot">✕</button>
+      </div>
+      <iframe id="chatbotIframe" title="Chatbot" frameborder="0" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
+    </div>
+  </div>
+
+  <!-- Link your JS file here -->
+  <!-- <script src="app.js"></script> -->
+</body>
+</html>

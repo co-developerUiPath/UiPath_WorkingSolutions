@@ -1,0 +1,1080 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Local JSON Visualizer (Drag + Theme Toggle)</title>
+  <style>
+    :root{
+      --text:#e5e7eb; --muted:#9ca3af; --border:#1f2937;
+      --panel:#0b1020; --bg:#020617; --accent:#4f46e5;
+      --error:#f87171; --ok:#34d399;
+    }
+
+    .jsonviz-app{
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--text);
+      background: transparent;
+      padding: 16px;
+    }
+
+    /* Light theme override via data-theme */
+    .jsonviz-app[data-theme="light"]{
+      --text:#0b1220;
+      --muted:#475569;
+      --border:#cbd5e1;
+      --panel:#ffffff;
+      --bg:#f8fafc;
+      --accent:#4f46e5;
+      --error:#dc2626;
+      --ok:#16a34a;
+    }
+
+    /* Header */
+    .jsonviz-header{
+      display:flex; justify-content:space-between; align-items:center; gap:16px;
+      padding:12px 14px; border-radius:14px;
+      background: radial-gradient(circle at top left, rgba(79,70,229,.24), transparent 55%),
+                  radial-gradient(circle at top right, rgba(59,130,246,.16), transparent 60%),
+                  rgba(15,23,42,.96);
+      border:1px solid rgba(55,65,81,.7);
+    }
+
+    .jsonviz-app[data-theme="light"] .jsonviz-header{
+      background: linear-gradient(180deg, rgba(255,255,255,.92), rgba(248,250,252,.92));
+      border: 1px solid rgba(203,213,225,.9);
+    }
+
+    .jsonviz-header-left{ display:flex; align-items:center; gap:10px; }
+
+    .jsonviz-logo{
+      width:34px; height:34px; border-radius:999px;
+      box-shadow:0 0 0 1px rgba(148,163,184,.6), 0 0 30px rgba(79,70,229,.55);
+      background:
+        radial-gradient(circle at 30% 10%, #e5e7eb 0, #e5e7eb 9%, transparent 10%) top left/50% 50% no-repeat,
+        radial-gradient(circle at 70% 10%, #e5e7eb 0, #e5e7eb 9%, transparent 10%) top right/50% 50% no-repeat,
+        radial-gradient(circle at 50% 75%, rgba(79,70,229,.85) 0, #4f46e5 26%, transparent 27%) bottom/80% 60% no-repeat,
+        radial-gradient(circle at 50% 120%, rgba(59,130,246,.55), transparent 60%);
+    }
+
+    .jsonviz-title{ display:flex; flex-direction:column; gap:4px; }
+
+    .jsonviz-pill{
+      font-size:11px; letter-spacing:.18em; text-transform:uppercase;
+      padding:3px 8px; border-radius:999px; width:fit-content;
+      border:1px solid rgba(148,163,184,.35);
+      background:rgba(15,23,42,.55); color:var(--muted);
+      display:flex; align-items:center; gap:6px;
+    }
+
+    .jsonviz-app[data-theme="light"] .jsonviz-pill{
+      background:rgba(248,250,252,.95);
+      border-color: rgba(203,213,225,.9);
+    }
+
+    .jsonviz-pill-dot{ width:6px; height:6px; border-radius:999px; background:var(--ok); box-shadow:0 0 10px rgba(52,211,153,.8); }
+    .jsonviz-h1{ font-size:18px; font-weight:700; }
+    .jsonviz-sub{ font-size:12px; font-weight:400; color:var(--muted); }
+    .jsonviz-subtitle{ font-size:13px; color:var(--muted); }
+
+    .jsonviz-header-right{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
+
+    .jsonviz-chip{
+      font-size:11px; color:var(--muted);
+      padding:4px 10px; border-radius:999px;
+      border:1px solid rgba(55,65,81,.7); background:rgba(15,23,42,.65);
+      display:flex; align-items:center; gap:7px;
+    }
+    .jsonviz-app[data-theme="light"] .jsonviz-chip{
+      border-color: rgba(203,213,225,.9);
+      background: rgba(248,250,252,.95);
+    }
+
+    .jsonviz-chip-dot{ width:8px; height:8px; border-radius:999px; background:var(--ok); box-shadow:0 0 12px rgba(52,211,153,.85); }
+
+    .jsonviz-zoom{
+      display:flex; align-items:center; gap:8px;
+      padding:6px 10px; border-radius:999px;
+      border:1px solid rgba(75,85,99,.7); background:rgba(15,23,42,.65);
+    }
+    .jsonviz-app[data-theme="light"] .jsonviz-zoom{
+      border-color: rgba(203,213,225,.9);
+      background: rgba(248,250,252,.95);
+    }
+
+    .jsonviz-zoom label{ font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); }
+    .jsonviz-zoom input{ accent-color: var(--accent); }
+    #zoomLabel{ width:42px; text-align:right; font-size:11px; color:var(--muted); }
+
+    /* Layout */
+    .jsonviz-main{
+      margin-top:12px;
+      display:grid;
+      grid-template-columns: 1fr 1.4fr;
+      gap:12px;
+    }
+
+    @media (max-width: 900px){
+      .jsonviz-main{ grid-template-columns:1fr; }
+    }
+
+    /* Panels */
+    .jsonviz-panel{
+      border-radius:16px;
+      border:1px solid rgba(55,65,81,.85);
+      background: radial-gradient(circle at top, rgba(15,23,42,.96) 0, #020617 55%, #000 100%);
+      overflow:hidden;
+    }
+    .jsonviz-app[data-theme="light"] .jsonviz-panel{
+      background: var(--bg);
+      border-color: rgba(203,213,225,.9);
+    }
+
+    .jsonviz-panel-header{
+      padding:10px 12px;
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      border-bottom:1px solid rgba(31,41,55,.85);
+      background:rgba(15,23,42,.75);
+    }
+    .jsonviz-app[data-theme="light"] .jsonviz-panel-header{
+      background: rgba(248,250,252,.95);
+      border-bottom-color: rgba(203,213,225,.9);
+    }
+
+    .jsonviz-panel-header-left{ display:flex; align-items:center; gap:10px; }
+    .jsonviz-dots{ display:flex; gap:4px; }
+    .jsonviz-dots span{ width:9px; height:9px; border-radius:999px; }
+    .jsonviz-dots span:nth-child(1){ background:#f87171; }
+    .jsonviz-dots span:nth-child(2){ background:#facc15; }
+    .jsonviz-dots span:nth-child(3){ background:#4ade80; }
+
+    .jsonviz-panel-title{
+      font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted);
+    }
+
+    .jsonviz-panel-header-right{ display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+
+    .jsonviz-btn{
+      border:none; cursor:pointer;
+      font-size:12px;
+      padding:7px 10px;
+      border-radius:999px;
+    }
+    .jsonviz-btn-secondary{
+      color:var(--muted);
+      border:1px solid rgba(75,85,99,.85);
+      background:rgba(15,23,42,.75);
+    }
+    .jsonviz-btn-secondary:hover{ filter:brightness(1.06); }
+    .jsonviz-app[data-theme="light"] .jsonviz-btn-secondary{
+      background: rgba(248,250,252,.95);
+      border-color: rgba(203,213,225,.9);
+    }
+
+    .jsonviz-panel-body{ padding:10px; }
+
+    /* Editor */
+    .jsonviz-editor{
+      border:1px solid rgba(31,41,55,.9);
+      border-radius:12px;
+      overflow:hidden;
+      background: rgba(2,6,23,.8);
+    }
+    .jsonviz-app[data-theme="light"] .jsonviz-editor{
+      background: var(--bg);
+      border-color: rgba(203,213,225,.9);
+    }
+
+    .jsonviz-editor-toolbar{
+      display:flex; justify-content:space-between; align-items:center;
+      padding:8px 10px;
+      border-bottom:1px solid rgba(31,41,55,.9);
+      background:rgba(15,23,42,.7);
+    }
+    .jsonviz-app[data-theme="light"] .jsonviz-editor-toolbar{
+      background: rgba(248,250,252,.95);
+      border-bottom-color: rgba(203,213,225,.9);
+    }
+
+    .jsonviz-label{
+      font-size:11px; text-transform:uppercase; letter-spacing:.12em; color:var(--muted);
+    }
+
+    .jsonviz-status{
+      font-size:11px;
+      padding:3px 8px; border-radius:999px;
+      border:1px solid rgba(55,65,81,.85);
+      display:flex; align-items:center; gap:6px;
+    }
+    .jsonviz-status-dot{ width:8px; height:8px; border-radius:999px; background:var(--muted); }
+    .jsonviz-status-ok{ color:var(--ok); border-color: rgba(16,185,129,.65); }
+    .jsonviz-status-ok .jsonviz-status-dot{ background:var(--ok); box-shadow:0 0 10px rgba(52,211,153,.85); }
+    .jsonviz-status-error{ color:var(--error); border-color: rgba(239,68,68,.65); }
+    .jsonviz-status-error .jsonviz-status-dot{ background:var(--error); box-shadow:0 0 10px rgba(248,113,113,.85); }
+
+    #jsonInput{
+      width:100%; min-height:320px;
+      padding:10px 12px;
+      border:none; outline:none; resize:vertical;
+      background:transparent; color:var(--text);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size:13px; line-height:1.5;
+    }
+
+    .jsonviz-editor-footer{
+      display:flex; justify-content:space-between; align-items:center; gap:10px;
+      padding:7px 10px;
+      border-top:1px solid rgba(31,41,55,.9);
+      background:rgba(15,23,42,.7);
+    }
+    .jsonviz-app[data-theme="light"] .jsonviz-editor-footer{
+      background: rgba(248,250,252,.95);
+      border-top-color: rgba(203,213,225,.9);
+    }
+
+    .jsonviz-meta{ display:flex; gap:12px; flex-wrap:wrap; font-size:11px; color:var(--muted); }
+    .jsonviz-error{ font-size:11px; color:var(--error); max-width:60%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+    /* Graph */
+    .jsonviz-graph{
+      border:1px solid rgba(31,41,55,.9);
+      border-radius:12px;
+      overflow:hidden;
+      background: rgba(2,6,23,.8);
+    }
+    .jsonviz-app[data-theme="light"] .jsonviz-graph{
+      background: var(--bg);
+      border-color: rgba(203,213,225,.9);
+    }
+
+    .jsonviz-graph-toolbar{
+      display:flex; justify-content:space-between; align-items:center; gap:10px;
+      padding:8px 10px;
+      border-bottom:1px solid rgba(31,41,55,.9);
+      background:rgba(15,23,42,.7);
+    }
+    .jsonviz-app[data-theme="light"] .jsonviz-graph-toolbar{
+      background: rgba(248,250,252,.95);
+      border-bottom-color: rgba(203,213,225,.9);
+    }
+
+    .jsonviz-scroll{
+      height:460px;
+      overflow:auto;
+      background-image:
+        linear-gradient(to right, rgba(31,41,55,.85) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(31,41,55,.85) 1px, transparent 1px);
+      background-size: 32px 32px;
+    }
+    .jsonviz-app[data-theme="light"] .jsonviz-scroll{
+      background-image:
+        linear-gradient(to right, rgba(203,213,225,.85) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(203,213,225,.85) 1px, transparent 1px);
+    }
+
+    .jsonviz-inner{
+      width:2000px; height:2000px;
+      transform-origin: 0 0;
+      position: relative;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .jsonviz-svg{ width:1800px; height:1800px; overflow:visible; }
+
+    .jsonviz-empty{
+      position:absolute; inset:0;
+      display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
+      color:var(--muted); text-align:center; padding:0 24px;
+      pointer-events:none;
+    }
+    .jsonviz-empty-icon{ font-size:22px; }
+    .jsonviz-empty-title{ color:var(--text); font-weight:600; }
+    .jsonviz-empty-sub{ font-size:12px; }
+
+    /* SVG links & nodes */
+    .graph-link{ stroke: rgba(148,163,184,.85); stroke-width:1.2; fill:none; }
+    .graph-link-outer{ stroke: rgba(15,23,42,.8); stroke-width:3.4; }
+    .graph-link-highlight{ stroke: rgba(79,70,229,.3); stroke-width:2.2; }
+
+    .jsonviz-app[data-theme="light"] .graph-link{ stroke: rgba(100,116,139,.9); }
+    .jsonviz-app[data-theme="light"] .graph-link-outer{ stroke: rgba(255,255,255,.9); }
+    .jsonviz-app[data-theme="light"] .graph-link-highlight{ stroke: rgba(79,70,229,.22); }
+
+    .graph-node{ cursor: grab; }
+    .graph-node:active{ cursor: grabbing; }
+
+    .graph-node rect{
+      fill: rgba(2,6,23,.9);
+      stroke: rgba(75,85,99,.85);
+      stroke-width: 1.1;
+      rx: 8; ry: 8;
+    }
+    .jsonviz-app[data-theme="light"] .graph-node rect{
+      fill: rgba(255,255,255,.95);
+      stroke: rgba(148,163,184,.95);
+    }
+
+    .graph-node text{ fill: var(--text); font-size: 11px; }
+    .graph-node-key{ font-weight: 700; }
+    .graph-node-type{ fill: var(--muted); font-size: 10px; }
+    .graph-node-value{ fill: rgba(148,163,184,.98); font-size: 10px; }
+
+    .graph-node--root rect{
+      stroke: rgba(129,140,248,.9);
+      stroke-width:1.6;
+      filter: drop-shadow(0 0 12px rgba(79,70,229,.9));
+    }
+    .graph-node--object rect{ stroke: rgba(94,234,212,.7); }
+    .graph-node--array rect{ stroke: rgba(251,191,36,.85); }
+    .graph-node--primitive rect{ stroke: rgba(248,250,252,.35); }
+
+    .jsonviz-footer{
+      margin-top:10px;
+      font-size:11px;
+      color: rgba(148,163,184,.85);
+    }
+
+    /* === Chatbot button & container (append to your CSS) === */
+    #btnChatbotLogo {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      border-radius: 999px;
+      background: rgba(15,23,42,0.75);
+      color: var(--text);
+      border: 1px solid rgba(75,85,99,0.85);
+    }
+    #btnChatbotLogo:hover { filter: brightness(1.05); }
+
+    /* floating chatbot container */
+    .chatbot-container {
+      position: fixed;
+      top: 84px;
+      right: 22px;
+      width: 420px;
+      height: 640px;
+      background: var(--panel, rgba(2,6,23,0.95));
+      border: 1px solid rgba(31,41,55,0.9);
+      border-radius: 10px;
+      z-index: 99999;
+      box-shadow: 0 20px 50px rgba(2,6,23,0.7);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* chatbot header */
+    .chatbot-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      background: rgba(15,23,42,0.85);
+      border-bottom: 1px solid rgba(31,41,55,0.9);
+      color: var(--text);
+      font-size: 13px;
+      gap: 8px;
+    }
+    .chatbot-title { font-weight: 600; }
+
+    .chatbot-close {
+      background: transparent;
+      border: none;
+      color: var(--text);
+      font-size: 14px;
+      cursor: pointer;
+      padding: 6px 8px;
+      border-radius: 6px;
+    }
+    .chatbot-close:hover { background: rgba(255,255,255,0.04); }
+
+    /* iframe */
+    #chatbotIframe {
+      width: 100%;
+      height: calc(100% - 40px);
+      border: 0;
+      display: block;
+    }
+
+    /* Light theme adjustments (if using theme) */
+    .jsonviz-app[data-theme="light"] .chatbot-container {
+      background: var(--bg);
+      border-color: rgba(203,213,225,0.9);
+    }
+    .jsonviz-app[data-theme="light"] .chatbot-header {
+      background: rgba(248,250,252,0.95);
+      border-bottom-color: rgba(203,213,225,0.9);
+    }
+
+    /* small screens */
+    @media (max-width: 480px) {
+      .chatbot-container { width: 320px; right: 10px; top:70px; height:560px; }
+    }
+	
+	/* Light theme: chatbot button matches other secondary buttons */
+.jsonviz-app[data-theme="light"] #btnChatbotLogo{
+  background: rgba(248,250,252,.95);
+  border-color: rgba(203,213,225,.9);
+  color: var(--muted);
+}
+
+.jsonviz-app[data-theme="light"] #btnChatbotLogo:hover{
+  filter: brightness(1.05);
+}
+  </style>
+</head>
+<body>
+  <div class="jsonviz-app">
+    <header class="jsonviz-header">
+      <div class="jsonviz-header-left">
+        <div class="jsonviz-logo"></div>
+        <div class="jsonviz-title">
+          <div class="jsonviz-pill">
+            <span class="jsonviz-pill-dot"></span>
+            JSON GRAPH STUDIO
+          </div>
+          <div class="jsonviz-h1">JSON Visualizer <span class="jsonviz-sub">— local & offline</span></div>
+          <div class="jsonviz-subtitle">Paste JSON on the left, drag nodes on the right.</div>
+        </div>
+      </div>
+
+      <div class="jsonviz-header-right">
+        <div class="jsonviz-chip">
+          <span class="jsonviz-chip-dot"></span>
+          Local-only · No network calls
+        </div>
+
+        <div class="jsonviz-zoom">
+          <label for="zoomRange">Zoom</label>
+          <input id="zoomRange" type="range" min="40" max="160" value="100" />
+          <span id="zoomLabel">100%</span>
+        </div>
+
+        <!-- Chatbot logo button (place inside your header-right) -->
+        <button class="jsonviz-btn jsonviz-btn-secondary" id="btnChatbotLogo" type="button" title="Open Chatbot" aria-label="Open Chatbot">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+            <path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+
+        <button class="jsonviz-btn jsonviz-btn-secondary" id="btnThemeToggle" type="button">🌙 Dark</button>
+      </div>
+    </header>
+
+    <main class="jsonviz-main">
+      <!-- Left -->
+      <section class="jsonviz-panel">
+        <div class="jsonviz-panel-header">
+          <div class="jsonviz-panel-header-left">
+            <div class="jsonviz-dots"><span></span><span></span><span></span></div>
+            <div class="jsonviz-panel-title">JSON INPUT</div>
+          </div>
+          <div class="jsonviz-panel-header-right">
+            <button class="jsonviz-btn jsonviz-btn-secondary" id="btnFormat">⭮ Format</button>
+            <button class="jsonviz-btn jsonviz-btn-secondary" id="btnSample">★ Sample</button>
+            <button class="jsonviz-btn jsonviz-btn-secondary" id="btnClear">✕ Clear</button>
+          </div>
+        </div>
+
+        <div class="jsonviz-panel-body">
+          <div class="jsonviz-editor">
+            <div class="jsonviz-editor-toolbar">
+              <div class="jsonviz-label">Editor</div>
+              <div id="editorStatus" class="jsonviz-status jsonviz-status-error">
+                <span class="jsonviz-status-dot"></span>
+                <span id="editorStatusText">Waiting for JSON…</span>
+              </div>
+            </div>
+
+            <textarea id="jsonInput" spellcheck="false" placeholder='{
+  "name": "Json Visualizer",
+  "version": 1,
+  "features": ["graph", "drag", "local"],
+  "meta": { "author": "You", "offline": true }
+}'></textarea>
+
+            <div class="jsonviz-editor-footer">
+              <div class="jsonviz-meta">
+                <span>Lines: <b id="lineCount">0</b></span>
+                <span>Chars: <b id="charCount">0</b></span>
+              </div>
+              <div class="jsonviz-error" id="errorText"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right -->
+      <section class="jsonviz-panel">
+        <div class="jsonviz-panel-header">
+          <div class="jsonviz-panel-header-left">
+            <div class="jsonviz-dots"><span></span><span></span><span></span></div>
+            <div class="jsonviz-panel-title">GRAPH VIEW</div>
+          </div>
+          <div class="jsonviz-panel-header-right">
+            <button class="jsonviz-btn jsonviz-btn-secondary" id="btnCenter">⊕ Center</button>
+            <button class="jsonviz-btn jsonviz-btn-secondary" id="btnExportSvg">⬇ SVG</button>
+          </div>
+        </div>
+
+        <div class="jsonviz-panel-body">
+          <div class="jsonviz-graph">
+            <div class="jsonviz-graph-toolbar">
+              <div class="jsonviz-label">Drag nodes to rearrange</div>
+              <div class="jsonviz-meta">
+                <span>Nodes: <b id="nodeCount">0</b></span>
+                <span>Depth: <b id="maxDepth">0</b></span>
+              </div>
+            </div>
+
+            <div class="jsonviz-scroll" id="graphScroll">
+              <div class="jsonviz-inner" id="graphInner">
+                <svg class="jsonviz-svg" id="graphSvg">
+                  <g id="linksGroup"></g>
+                  <g id="nodesGroup"></g>
+                </svg>
+
+                <div class="jsonviz-empty" id="graphEmpty">
+                  <div class="jsonviz-empty-icon">🌌</div>
+                  <div class="jsonviz-empty-title">No graph yet</div>
+                  <div class="jsonviz-empty-sub">
+                    Paste valid JSON (or click <b>Sample</b>) to generate nodes.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div class="jsonviz-footer">Tip: Ctrl/Cmd + Enter to re-parse quickly.</div>
+
+    <!-- Chatbot iframe container (place inside the app container, e.g. just before the closing app div) -->
+    <div id="chatbotContainer" class="chatbot-container" aria-hidden="true" style="display:none;">
+      <div class="chatbot-header">
+        <div class="chatbot-title">Chatbot</div>
+        <button id="btnCloseChatbot" class="chatbot-close" aria-label="Close chatbot">✕</button>
+      </div>
+      <iframe id="chatbotIframe" title="Chatbot" frameborder="0" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const $ = (id) => document.getElementById(id);
+
+      const jsonInput = $("jsonInput");
+      const editorStatus = $("editorStatus");
+      const editorStatusText = $("editorStatusText");
+      const errorText = $("errorText");
+      const lineCountEl = $("lineCount");
+      const charCountEl = $("charCount");
+      const nodeCountEl = $("nodeCount");
+      const maxDepthEl = $("maxDepth");
+      const graphSvg = $("graphSvg");
+      const linksGroup = $("linksGroup");
+      const nodesGroup = $("nodesGroup");
+      const graphEmpty = $("graphEmpty");
+      const graphInner = $("graphInner");
+      const graphScroll = $("graphScroll");
+      const zoomRange = $("zoomRange");
+      const zoomLabel = $("zoomLabel");
+      const btnFormat = $("btnFormat");
+      const btnSample = $("btnSample");
+      const btnClear = $("btnClear");
+      const btnCenter = $("btnCenter");
+      const btnExportSvg = $("btnExportSvg");
+      const btnThemeToggle = $("btnThemeToggle");
+
+      const appRoot = document.querySelector(".jsonviz-app");
+
+      let lastValidJson = null;
+
+      function setEditorStatus(ok, message) {
+        editorStatus.classList.toggle("jsonviz-status-ok", ok);
+        editorStatus.classList.toggle("jsonviz-status-error", !ok);
+        editorStatusText.textContent = message;
+      }
+
+      function updateCounts() {
+        const text = jsonInput.value || "";
+        const lines = text ? text.split(/\r\n|\r|\n/).length : 0;
+        lineCountEl.textContent = String(lines);
+        charCountEl.textContent = String(text.length);
+      }
+
+      function isPrimitive(value) {
+        return value === null || ["string", "number", "boolean"].includes(typeof value);
+      }
+
+      function toShortValue(value, maxLength) {
+        let repr;
+        if (typeof value === "string") repr = `"${value}"`;
+        else if (typeof value === "number" || typeof value === "boolean") repr = String(value);
+        else if (value === null) repr = "null";
+        else repr = JSON.stringify(value);
+        return repr.length > maxLength ? repr.slice(0, maxLength - 1) + "…" : repr;
+      }
+
+      function clearGraph() {
+        while (linksGroup.firstChild) linksGroup.removeChild(linksGroup.firstChild);
+        while (nodesGroup.firstChild) nodesGroup.removeChild(nodesGroup.firstChild);
+      }
+
+      function buildGraphStructure(data) {
+        let idCounter = 0;
+        const nodes = [];
+        const links = [];
+        let maxDepth = 0;
+
+        function createNode(labelKey, value, depth) {
+          const id = idCounter++;
+          let type = typeof value;
+
+          if (Array.isArray(value)) type = "array";
+          else if (value === null) type = "null";
+          else if (value && type === "object") type = "object";
+
+          const node = { id, key: labelKey, rawValue: value, type, depth, children: [] };
+          nodes.push(node);
+          maxDepth = Math.max(maxDepth, depth);
+
+          if (isPrimitive(value) || value === undefined) return node;
+
+          if (Array.isArray(value)) {
+            value.forEach((item, index) => {
+              const childNode = createNode(`[${index}]`, item, depth + 1);
+              links.push({ source: id, target: childNode.id });
+              node.children.push(childNode.id);
+            });
+          } else if (value && typeof value === "object") {
+            Object.keys(value).forEach((k) => {
+              const childNode = createNode(k, value[k], depth + 1);
+              links.push({ source: id, target: childNode.id });
+              node.children.push(childNode.id);
+            });
+          }
+          return node;
+        }
+
+        createNode("root", data, 0);
+        return { nodes, links, maxDepth: maxDepth + 1 };
+      }
+
+      function layoutTree(nodes, links) {
+        const childrenMap = new Map();
+        const parentMap = new Map();
+        nodes.forEach((n) => childrenMap.set(n.id, []));
+        links.forEach((l) => {
+          childrenMap.get(l.source).push(l.target);
+          parentMap.set(l.target, l.source);
+        });
+
+        const root = nodes.find((n) => !parentMap.has(n.id)) || nodes[0];
+        const position = new Map();
+        let nextY = 0;
+
+        const xGap = 160;
+        const yGap = 60;
+
+        function dfs(nodeId, depth) {
+          const children = childrenMap.get(nodeId) || [];
+          if (children.length === 0) {
+            const y = nextY * yGap;
+            position.set(nodeId, { x: depth * xGap, y });
+            nextY++;
+            return y;
+          }
+          let minY = Infinity;
+          let maxY = -Infinity;
+          children.forEach((childId) => {
+            const childY = dfs(childId, depth + 1);
+            minY = Math.min(minY, childY);
+            maxY = Math.max(maxY, childY);
+          });
+          const y = (minY + maxY) / 2;
+          position.set(nodeId, { x: depth * xGap, y });
+          return y;
+        }
+
+        dfs(root.id, 0);
+
+        return nodes.map((n) => {
+          const pos = position.get(n.id) || { x: 0, y: 0 };
+          return { id: n.id, x: pos.x, y: pos.y };
+        });
+      }
+
+      function getSvgPoint(evt) {
+        const pt = graphSvg.createSVGPoint();
+        pt.x = evt.clientX;
+        pt.y = evt.clientY;
+
+        const ctm = graphSvg.getScreenCTM();
+        if (!ctm) return { x: 0, y: 0 };
+
+        const p = pt.matrixTransform(ctm.inverse());
+        return { x: p.x, y: p.y };
+      }
+
+      function centerGraph() {
+        const wrapperRect = graphScroll.getBoundingClientRect();
+        const contentRect = graphInner.getBoundingClientRect();
+        const scrollLeft = (contentRect.width - wrapperRect.width) / 2;
+        const scrollTop = (contentRect.height - wrapperRect.height) / 2;
+        if (!Number.isNaN(scrollLeft) && !Number.isNaN(scrollTop)) {
+          graphScroll.scrollLeft = Math.max(0, scrollLeft);
+          graphScroll.scrollTop = Math.max(0, scrollTop);
+        }
+      }
+
+      function exportSvg() {
+        const serializer = new XMLSerializer();
+        const clonedSvg = graphSvg.cloneNode(true);
+        clonedSvg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+        clonedSvg.setAttribute("width", "1800");
+        clonedSvg.setAttribute("height", "1800");
+        const svgString = serializer.serializeToString(clonedSvg);
+
+        const blob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "json-graph.svg";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+
+      function renderGraph(data) {
+        clearGraph();
+
+        if (!data) {
+          graphEmpty.style.display = "flex";
+          nodeCountEl.textContent = "0";
+          maxDepthEl.textContent = "0";
+          return;
+        }
+
+        graphEmpty.style.display = "none";
+
+        const { nodes, links, maxDepth } = buildGraphStructure(data);
+        const positions = layoutTree(nodes, links);
+        const nodePositions = new Map(positions.map((p) => [p.id, { x: p.x, y: p.y }]));
+
+        nodeCountEl.textContent = String(nodes.length);
+        maxDepthEl.textContent = String(maxDepth);
+
+        const nodeWidth = 150;
+        const nodeHeight = 40;
+
+        function drawLinks() {
+          while (linksGroup.firstChild) linksGroup.removeChild(linksGroup.firstChild);
+
+          links.forEach((link) => {
+            const srcPos = nodePositions.get(link.source);
+            const tgtPos = nodePositions.get(link.target);
+            if (!srcPos || !tgtPos) return;
+
+            const x1 = srcPos.x + nodeWidth;
+            const y1 = srcPos.y + nodeHeight / 2;
+            const x2 = tgtPos.x;
+            const y2 = tgtPos.y + nodeHeight / 2;
+            const midX = (x1 + x2) / 2;
+
+            const pathData = `M ${x1} ${y1} C ${midX} ${y1}, ${midX} ${y2}, ${x2} ${y2}`;
+
+            const outer = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            outer.setAttribute("d", pathData);
+            outer.setAttribute("class", "graph-link graph-link-outer");
+            linksGroup.appendChild(outer);
+
+            const highlight = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            highlight.setAttribute("d", pathData);
+            highlight.setAttribute("class", "graph-link graph-link-highlight");
+            linksGroup.appendChild(highlight);
+
+            const main = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            main.setAttribute("d", pathData);
+            main.setAttribute("class", "graph-link");
+            linksGroup.appendChild(main);
+          });
+        }
+
+        drawLinks();
+
+        let dragging = null; // { id, offsetX, offsetY }
+
+        function onPointerMove(e) {
+          if (!dragging) return;
+
+          const { x, y } = getSvgPoint(e);
+          const newX = x - dragging.offsetX;
+          const newY = y - dragging.offsetY;
+
+          nodePositions.set(dragging.id, { x: newX, y: newY });
+
+          const g = document.querySelector(`g[data-node-id="${dragging.id}"]`);
+          if (g) g.setAttribute("transform", `translate(${newX}, ${newY})`);
+
+          drawLinks();
+        }
+
+        function stopDrag() {
+          if (!dragging) return;
+          dragging = null;
+          window.removeEventListener("pointermove", onPointerMove);
+          window.removeEventListener("pointerup", stopDrag);
+          window.removeEventListener("pointercancel", stopDrag);
+        }
+
+        nodes.forEach((node) => {
+          const pos = nodePositions.get(node.id);
+          if (!pos) return;
+
+          const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+          g.setAttribute("class", "graph-node");
+          g.setAttribute("transform", `translate(${pos.x}, ${pos.y})`);
+          g.setAttribute("data-node-id", String(node.id));
+
+          if (node.depth === 0) g.classList.add("graph-node--root");
+          if (node.type === "object") g.classList.add("graph-node--object");
+          else if (node.type === "array") g.classList.add("graph-node--array");
+          else g.classList.add("graph-node--primitive");
+
+          const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+          rect.setAttribute("width", String(nodeWidth));
+          rect.setAttribute("height", String(nodeHeight));
+          g.appendChild(rect);
+
+          const keyText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          keyText.setAttribute("x", "8");
+          keyText.setAttribute("y", "15");
+          keyText.setAttribute("class", "graph-node-key");
+          keyText.textContent = node.key;
+          g.appendChild(keyText);
+
+          const typeText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          typeText.setAttribute("x", "8");
+          typeText.setAttribute("y", "29");
+          typeText.setAttribute("class", "graph-node-type");
+          typeText.textContent = node.type;
+          g.appendChild(typeText);
+
+          if (isPrimitive(node.rawValue) && node.depth > 0) {
+            const valText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            valText.setAttribute("x", String(nodeWidth - 6));
+            valText.setAttribute("y", "15");
+            valText.setAttribute("text-anchor", "end");
+            valText.setAttribute("class", "graph-node-value");
+            valText.textContent = toShortValue(node.rawValue, 18);
+            g.appendChild(valText);
+          }
+
+          g.addEventListener("pointerdown", (e) => {
+            e.preventDefault();
+            try { g.setPointerCapture(e.pointerId); } catch {}
+
+            const p = getSvgPoint(e);
+            const current = nodePositions.get(node.id) || { x: 0, y: 0 };
+
+            dragging = {
+              id: node.id,
+              offsetX: p.x - current.x,
+              offsetY: p.y - current.y
+            };
+
+            window.addEventListener("pointermove", onPointerMove);
+            window.addEventListener("pointerup", stopDrag, { once: true });
+            window.addEventListener("pointercancel", stopDrag, { once: true });
+          });
+
+          nodesGroup.appendChild(g);
+        });
+
+        centerGraph();
+      }
+
+      function parseAndRender() {
+        const text = (jsonInput.value || "").trim();
+        updateCounts();
+
+        if (!text) {
+          lastValidJson = null;
+          setEditorStatus(false, "Waiting for JSON…");
+          errorText.textContent = "";
+          renderGraph(null);
+          return;
+        }
+
+        try {
+          const parsed = JSON.parse(text);
+          lastValidJson = parsed;
+          setEditorStatus(true, "Valid JSON");
+          errorText.textContent = "";
+          renderGraph(parsed);
+        } catch (err) {
+          setEditorStatus(false, "Invalid JSON");
+          errorText.textContent = err.message || "Invalid JSON";
+          renderGraph(lastValidJson ?? null);
+        }
+      }
+
+      function formatJson() {
+        const text = (jsonInput.value || "").trim();
+        if (!text) return;
+        try {
+          const parsed = JSON.parse(text);
+          jsonInput.value = JSON.stringify(parsed, null, 2);
+          parseAndRender();
+        } catch (err) {
+          setEditorStatus(false, "Cannot format: invalid JSON");
+          errorText.textContent = err.message || "Invalid JSON";
+        }
+      }
+
+      function loadSampleJson() {
+        const sample = {
+          app: "Local JSON Visualizer",
+          version: 1,
+          features: [
+            { name: "Graph view", enabled: true },
+            { name: "Drag nodes", enabled: true },
+            { name: "Theme toggle", enabled: true }
+          ],
+          user: { name: "You", roles: ["developer", "viewer"], preferences: { theme: "dark" } },
+          items: [
+            { id: 1, label: "Node A", tags: ["root", "entry"] },
+            { id: 2, label: "Node B", children: [1, 3] },
+            { id: 3, label: "Node C", meta: { archived: false } }
+          ],
+          flags: { offline: true }
+        };
+
+        jsonInput.value = JSON.stringify(sample, null, 2);
+        parseAndRender();
+      }
+
+      function clearEditor() {
+        jsonInput.value = "";
+        lastValidJson = null;
+        updateCounts();
+        setEditorStatus(false, "Waiting for JSON…");
+        errorText.textContent = "";
+        renderGraph(null);
+      }
+
+      function applyZoom(value) {
+        const scale = value / 100;
+        graphInner.style.transform = `scale(${scale})`;
+        zoomLabel.textContent = `${value}%`;
+      }
+
+      // Theme toggle + persistence
+      function setTheme(theme) {
+        appRoot.setAttribute("data-theme", theme);
+        localStorage.setItem("jsonviz_theme", theme);
+        btnThemeToggle.textContent = theme === "light" ? "☀️ Light" : "🌙 Dark";
+      }
+
+      btnThemeToggle.addEventListener("click", () => {
+        const current = appRoot.getAttribute("data-theme") || "dark";
+        setTheme(current === "dark" ? "light" : "dark");
+      });
+
+      // Wire events
+      jsonInput.addEventListener("input", parseAndRender);
+
+      jsonInput.addEventListener("keydown", (e) => {
+        if (e.key === "Tab") {
+          e.preventDefault();
+          const start = jsonInput.selectionStart;
+          const end = jsonInput.selectionEnd;
+          const value = jsonInput.value;
+          jsonInput.value = value.substring(0, start) + "  " + value.substring(end);
+          jsonInput.selectionStart = jsonInput.selectionEnd = start + 2;
+        }
+        if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+          e.preventDefault();
+          parseAndRender();
+        }
+      });
+
+      btnFormat.addEventListener("click", formatJson);
+      btnSample.addEventListener("click", loadSampleJson);
+      btnClear.addEventListener("click", clearEditor);
+      btnCenter.addEventListener("click", centerGraph);
+      btnExportSvg.addEventListener("click", exportSvg);
+
+      zoomRange.addEventListener("input", (e) => applyZoom(Number(e.target.value)));
+
+      // Init
+      applyZoom(Number(zoomRange.value));
+      const savedTheme = localStorage.getItem("jsonviz_theme") || "dark";
+      setTheme(savedTheme);
+      loadSampleJson();
+    })();
+
+    // ===== Chatbot toggle & iframe logic =====
+    (function () {
+      const btnChatbotLogo = document.getElementById("btnChatbotLogo");
+      const chatbotContainer = document.getElementById("chatbotContainer");
+      const chatbotIframe = document.getElementById("chatbotIframe");
+      const btnCloseChatbot = document.getElementById("btnCloseChatbot");
+
+      // The UiPath staging URL (spaces encoded)
+      const CHATBOT_URL =
+        "https://staging.uipath.com/uipath_tsp/DefaultTenant/autopilotforeveryone_/conversational-agents/?" +
+        "agentId=1598318&mode=embedded&title=Welcome%20To%20Co-developer&welcomeTitle=Co-developer&" +
+        "welcomeDescription=MFKHAN&suggestions=%5B%22MathServer%22,%22WebSearch%22%5D";
+
+      let chatbotVisible = false;
+
+      function showChatbot() {
+        // set src only once to preserve chatbot state while open
+        if (!chatbotIframe.src) {
+          chatbotIframe.src = CHATBOT_URL;
+        }
+        chatbotContainer.style.display = "flex";
+        chatbotContainer.setAttribute("aria-hidden", "false");
+        chatbotVisible = true;
+      }
+
+      function hideChatbot() {
+        chatbotContainer.style.display = "none";
+        chatbotContainer.setAttribute("aria-hidden", "true");
+        chatbotVisible = false;
+      }
+
+      // toggle on logo click
+      if (btnChatbotLogo) {
+        btnChatbotLogo.addEventListener("click", function (e) {
+          e.preventDefault();
+          if (chatbotVisible) hideChatbot();
+          else showChatbot();
+        });
+      }
+
+      // close from inside panel
+      if (btnCloseChatbot) {
+        btnCloseChatbot.addEventListener("click", function (e) {
+          e.preventDefault();
+          hideChatbot();
+        });
+      }
+
+      // optional: allow ESC to close
+      window.addEventListener("keydown", function (e) {
+        if (e.key === "Escape" && chatbotVisible) {
+          hideChatbot();
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

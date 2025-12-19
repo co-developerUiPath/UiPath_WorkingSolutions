@@ -1,0 +1,417 @@
+:root{
+  --text:#e5e7eb; --muted:#9ca3af; --border:#1f2937;
+  --panel:#0b1020; --bg:#020617; --accent:#4f46e5;
+  --error:#f87171; --ok:#34d399;
+}
+
+.jsonviz-app{
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  color: var(--text);
+  background: transparent;
+  padding: 16px;
+}
+
+/* Light theme override via data-theme */
+.jsonviz-app[data-theme="light"]{
+  --text:#0b1220;
+  --muted:#475569;
+  --border:#cbd5e1;
+  --panel:#ffffff;
+  --bg:#f8fafc;
+  --accent:#4f46e5;
+  --error:#dc2626;
+  --ok:#16a34a;
+}
+
+/* Header */
+.jsonviz-header{
+  display:flex; justify-content:space-between; align-items:center; gap:16px;
+  padding:12px 14px; border-radius:14px;
+  background: radial-gradient(circle at top left, rgba(79,70,229,.24), transparent 55%),
+              radial-gradient(circle at top right, rgba(59,130,246,.16), transparent 60%),
+              rgba(15,23,42,.96);
+  border:1px solid rgba(55,65,81,.7);
+}
+
+.jsonviz-app[data-theme="light"] .jsonviz-header{
+  background: linear-gradient(180deg, rgba(255,255,255,.92), rgba(248,250,252,.92));
+  border: 1px solid rgba(203,213,225,.9);
+}
+
+.jsonviz-header-left{ display:flex; align-items:center; gap:10px; }
+
+.jsonviz-logo{
+  width:34px; height:34px; border-radius:999px;
+  box-shadow:0 0 0 1px rgba(148,163,184,.6), 0 0 30px rgba(79,70,229,.55);
+  background:
+    radial-gradient(circle at 30% 10%, #e5e7eb 0, #e5e7eb 9%, transparent 10%) top left/50% 50% no-repeat,
+    radial-gradient(circle at 70% 10%, #e5e7eb 0, #e5e7eb 9%, transparent 10%) top right/50% 50% no-repeat,
+    radial-gradient(circle at 50% 75%, rgba(79,70,229,.85) 0, #4f46e5 26%, transparent 27%) bottom/80% 60% no-repeat,
+    radial-gradient(circle at 50% 120%, rgba(59,130,246,.55), transparent 60%);
+}
+
+.jsonviz-title{ display:flex; flex-direction:column; gap:4px; }
+
+.jsonviz-pill{
+  font-size:11px; letter-spacing:.18em; text-transform:uppercase;
+  padding:3px 8px; border-radius:999px; width:fit-content;
+  border:1px solid rgba(148,163,184,.35);
+  background:rgba(15,23,42,.55); color:var(--muted);
+  display:flex; align-items:center; gap:6px;
+}
+
+.jsonviz-app[data-theme="light"] .jsonviz-pill{
+  background:rgba(248,250,252,.95);
+  border-color: rgba(203,213,225,.9);
+}
+
+.jsonviz-pill-dot{ width:6px; height:6px; border-radius:999px; background:var(--ok); box-shadow:0 0 10px rgba(52,211,153,.8); }
+.jsonviz-h1{ font-size:18px; font-weight:700; }
+.jsonviz-sub{ font-size:12px; font-weight:400; color:var(--muted); }
+.jsonviz-subtitle{ font-size:13px; color:var(--muted); }
+
+.jsonviz-header-right{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
+
+.jsonviz-chip{
+  font-size:11px; color:var(--muted);
+  padding:4px 10px; border-radius:999px;
+  border:1px solid rgba(55,65,81,.7); background:rgba(15,23,42,.65);
+  display:flex; align-items:center; gap:7px;
+}
+.jsonviz-app[data-theme="light"] .jsonviz-chip{
+  border-color: rgba(203,213,225,.9);
+  background: rgba(248,250,252,.95);
+}
+
+.jsonviz-chip-dot{ width:8px; height:8px; border-radius:999px; background:var(--ok); box-shadow:0 0 12px rgba(52,211,153,.85); }
+
+.jsonviz-zoom{
+  display:flex; align-items:center; gap:8px;
+  padding:6px 10px; border-radius:999px;
+  border:1px solid rgba(75,85,99,.7); background:rgba(15,23,42,.65);
+}
+.jsonviz-app[data-theme="light"] .jsonviz-zoom{
+  border-color: rgba(203,213,225,.9);
+  background: rgba(248,250,252,.95);
+}
+
+.jsonviz-zoom label{ font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); }
+.jsonviz-zoom input{ accent-color: var(--accent); }
+#zoomLabel{ width:42px; text-align:right; font-size:11px; color:var(--muted); }
+
+/* Layout */
+.jsonviz-main{
+  margin-top:12px;
+  display:grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap:12px;
+}
+
+@media (max-width: 900px){
+  .jsonviz-main{ grid-template-columns:1fr; }
+}
+
+/* Panels */
+.jsonviz-panel{
+  border-radius:16px;
+  border:1px solid rgba(55,65,81,.85);
+  background: radial-gradient(circle at top, rgba(15,23,42,.96) 0, #020617 55%, #000 100%);
+  overflow:hidden;
+}
+.jsonviz-app[data-theme="light"] .jsonviz-panel{
+  background: var(--bg);
+  border-color: rgba(203,213,225,.9);
+}
+
+.jsonviz-panel-header{
+  padding:10px 12px;
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  border-bottom:1px solid rgba(31,41,55,.85);
+  background:rgba(15,23,42,.75);
+}
+.jsonviz-app[data-theme="light"] .jsonviz-panel-header{
+  background: rgba(248,250,252,.95);
+  border-bottom-color: rgba(203,213,225,.9);
+}
+
+.jsonviz-panel-header-left{ display:flex; align-items:center; gap:10px; }
+.jsonviz-dots{ display:flex; gap:4px; }
+.jsonviz-dots span{ width:9px; height:9px; border-radius:999px; }
+.jsonviz-dots span:nth-child(1){ background:#f87171; }
+.jsonviz-dots span:nth-child(2){ background:#facc15; }
+.jsonviz-dots span:nth-child(3){ background:#4ade80; }
+
+.jsonviz-panel-title{
+  font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted);
+}
+
+.jsonviz-panel-header-right{ display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+
+.jsonviz-btn{
+  border:none; cursor:pointer;
+  font-size:12px;
+  padding:7px 10px;
+  border-radius:999px;
+}
+.jsonviz-btn-secondary{
+  color:var(--muted);
+  border:1px solid rgba(75,85,99,.85);
+  background:rgba(15,23,42,.75);
+}
+.jsonviz-btn-secondary:hover{ filter:brightness(1.06); }
+.jsonviz-app[data-theme="light"] .jsonviz-btn-secondary{
+  background: rgba(248,250,252,.95);
+  border-color: rgba(203,213,225,.9);
+}
+
+.jsonviz-panel-body{ padding:10px; }
+
+/* Editor */
+.jsonviz-editor{
+  border:1px solid rgba(31,41,55,.9);
+  border-radius:12px;
+  overflow:hidden;
+  background: rgba(2,6,23,.8);
+}
+.jsonviz-app[data-theme="light"] .jsonviz-editor{
+  background: var(--bg);
+  border-color: rgba(203,213,225,.9);
+}
+
+.jsonviz-editor-toolbar{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:8px 10px;
+  border-bottom:1px solid rgba(31,41,55,.9);
+  background:rgba(15,23,42,.7);
+}
+.jsonviz-app[data-theme="light"] .jsonviz-editor-toolbar{
+  background: rgba(248,250,252,.95);
+  border-bottom-color: rgba(203,213,225,.9);
+}
+
+.jsonviz-label{
+  font-size:11px; text-transform:uppercase; letter-spacing:.12em; color:var(--muted);
+}
+
+.jsonviz-status{
+  font-size:11px;
+  padding:3px 8px; border-radius:999px;
+  border:1px solid rgba(55,65,81,.85);
+  display:flex; align-items:center; gap:6px;
+}
+.jsonviz-status-dot{ width:8px; height:8px; border-radius:999px; background:var(--muted); }
+.jsonviz-status-ok{ color:var(--ok); border-color: rgba(16,185,129,.65); }
+.jsonviz-status-ok .jsonviz-status-dot{ background:var(--ok); box-shadow:0 0 10px rgba(52,211,153,.85); }
+.jsonviz-status-error{ color:var(--error); border-color: rgba(239,68,68,.65); }
+.jsonviz-status-error .jsonviz-status-dot{ background:var(--error); box-shadow:0 0 10px rgba(248,113,113,.85); }
+
+#jsonInput{
+  width:100%; min-height:320px;
+  padding:10px 12px;
+  border:none; outline:none; resize:vertical;
+  background:transparent; color:var(--text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size:13px; line-height:1.5;
+}
+
+.jsonviz-editor-footer{
+  display:flex; justify-content:space-between; align-items:center; gap:10px;
+  padding:7px 10px;
+  border-top:1px solid rgba(31,41,55,.9);
+  background:rgba(15,23,42,.7);
+}
+.jsonviz-app[data-theme="light"] .jsonviz-editor-footer{
+  background: rgba(248,250,252,.95);
+  border-top-color: rgba(203,213,225,.9);
+}
+
+.jsonviz-meta{ display:flex; gap:12px; flex-wrap:wrap; font-size:11px; color:var(--muted); }
+.jsonviz-error{ font-size:11px; color:var(--error); max-width:60%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+/* Graph */
+.jsonviz-graph{
+  border:1px solid rgba(31,41,55,.9);
+  border-radius:12px;
+  overflow:hidden;
+  background: rgba(2,6,23,.8);
+}
+.jsonviz-app[data-theme="light"] .jsonviz-graph{
+  background: var(--bg);
+  border-color: rgba(203,213,225,.9);
+}
+
+.jsonviz-graph-toolbar{
+  display:flex; justify-content:space-between; align-items:center; gap:10px;
+  padding:8px 10px;
+  border-bottom:1px solid rgba(31,41,55,.9);
+  background:rgba(15,23,42,.7);
+}
+.jsonviz-app[data-theme="light"] .jsonviz-graph-toolbar{
+  background: rgba(248,250,252,.95);
+  border-bottom-color: rgba(203,213,225,.9);
+}
+
+.jsonviz-scroll{
+  height:460px;
+  overflow:auto;
+  background-image:
+    linear-gradient(to right, rgba(31,41,55,.85) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(31,41,55,.85) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+.jsonviz-app[data-theme="light"] .jsonviz-scroll{
+  background-image:
+    linear-gradient(to right, rgba(203,213,225,.85) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(203,213,225,.85) 1px, transparent 1px);
+}
+
+.jsonviz-inner{
+  width:2000px; height:2000px;
+  transform-origin: 0 0;
+  position: relative;
+  display:flex; align-items:center; justify-content:center;
+}
+.jsonviz-svg{ width:1800px; height:1800px; overflow:visible; }
+
+.jsonviz-empty{
+  position:absolute; inset:0;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
+  color:var(--muted); text-align:center; padding:0 24px;
+  pointer-events:none;
+}
+.jsonviz-empty-icon{ font-size:22px; }
+.jsonviz-empty-title{ color:var(--text); font-weight:600; }
+.jsonviz-empty-sub{ font-size:12px; }
+
+/* SVG links & nodes */
+.graph-link{ stroke: rgba(148,163,184,.85); stroke-width:1.2; fill:none; }
+.graph-link-outer{ stroke: rgba(15,23,42,.8); stroke-width:3.4; }
+.graph-link-highlight{ stroke: rgba(79,70,229,.3); stroke-width:2.2; }
+
+.jsonviz-app[data-theme="light"] .graph-link{ stroke: rgba(100,116,139,.9); }
+.jsonviz-app[data-theme="light"] .graph-link-outer{ stroke: rgba(255,255,255,.9); }
+.jsonviz-app[data-theme="light"] .graph-link-highlight{ stroke: rgba(79,70,229,.22); }
+
+.graph-node{ cursor: grab; }
+.graph-node:active{ cursor: grabbing; }
+
+.graph-node rect{
+  fill: rgba(2,6,23,.9);
+  stroke: rgba(75,85,99,.85);
+  stroke-width: 1.1;
+  rx: 8; ry: 8;
+}
+.jsonviz-app[data-theme="light"] .graph-node rect{
+  fill: rgba(255,255,255,.95);
+  stroke: rgba(148,163,184,.95);
+}
+
+.graph-node text{ fill: var(--text); font-size: 11px; }
+.graph-node-key{ font-weight: 700; }
+.graph-node-type{ fill: var(--muted); font-size: 10px; }
+.graph-node-value{ fill: rgba(148,163,184,.98); font-size: 10px; }
+
+.graph-node--root rect{
+  stroke: rgba(129,140,248,.9);
+  stroke-width:1.6;
+  filter: drop-shadow(0 0 12px rgba(79,70,229,.9));
+}
+.graph-node--object rect{ stroke: rgba(94,234,212,.7); }
+.graph-node--array rect{ stroke: rgba(251,191,36,.85); }
+.graph-node--primitive rect{ stroke: rgba(248,250,252,.35); }
+
+.jsonviz-footer{
+  margin-top:10px;
+  font-size:11px;
+  color: rgba(148,163,184,.85);
+}
+
+/* === Chatbot button & container === */
+#btnChatbotLogo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 999px;
+  background: rgba(15,23,42,0.75);
+  color: var(--text);
+  border: 1px solid rgba(75,85,99,0.85);
+}
+#btnChatbotLogo:hover { filter: brightness(1.05); }
+
+/* Light theme: chatbot button matches other secondary buttons */
+.jsonviz-app[data-theme="light"] #btnChatbotLogo{
+  background: rgba(248,250,252,.95);
+  border-color: rgba(203,213,225,.9);
+  color: var(--muted);
+}
+.jsonviz-app[data-theme="light"] #btnChatbotLogo:hover{
+  filter: brightness(1.05);
+}
+
+/* floating chatbot container */
+.chatbot-container {
+  position: fixed;
+  top: 84px;
+  right: 22px;
+  width: 420px;
+  height: 640px;
+  background: var(--panel, rgba(2,6,23,0.95));
+  border: 1px solid rgba(31,41,55,0.9);
+  border-radius: 10px;
+  z-index: 99999;
+  box-shadow: 0 20px 50px rgba(2,6,23,0.7);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* chatbot header */
+.chatbot-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  background: rgba(15,23,42,0.85);
+  border-bottom: 1px solid rgba(31,41,55,0.9);
+  color: var(--text);
+  font-size: 13px;
+  gap: 8px;
+}
+.chatbot-title { font-weight: 600; }
+
+.chatbot-close {
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 6px;
+}
+.chatbot-close:hover { background: rgba(255,255,255,0.04); }
+
+/* iframe */
+#chatbotIframe {
+  width: 100%;
+  height: calc(100% - 40px);
+  border: 0;
+  display: block;
+}
+
+/* Light theme adjustments */
+.jsonviz-app[data-theme="light"] .chatbot-container {
+  background: var(--bg);
+  border-color: rgba(203,213,225,0.9);
+}
+.jsonviz-app[data-theme="light"] .chatbot-header {
+  background: rgba(248,250,252,0.95);
+  border-bottom-color: rgba(203,213,225,0.9);
+}
+
+/* small screens */
+@media (max-width: 480px) {
+  .chatbot-container { width: 320px; right: 10px; top:70px; height:560px; }
+}

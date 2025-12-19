@@ -1,0 +1,502 @@
+(function () {
+  const $ = (id) => document.getElementById(id);
+
+  const jsonInput = $("jsonInput");
+  const editorStatus = $("editorStatus");
+  const editorStatusText = $("editorStatusText");
+  const errorText = $("errorText");
+  const lineCountEl = $("lineCount");
+  const charCountEl = $("charCount");
+  const nodeCountEl = $("nodeCount");
+  const maxDepthEl = $("maxDepth");
+  const graphSvg = $("graphSvg");
+  const linksGroup = $("linksGroup");
+  const nodesGroup = $("nodesGroup");
+  const graphEmpty = $("graphEmpty");
+  const graphInner = $("graphInner");
+  const graphScroll = $("graphScroll");
+  const zoomRange = $("zoomRange");
+  const zoomLabel = $("zoomLabel");
+  const btnFormat = $("btnFormat");
+  const btnSample = $("btnSample");
+  const btnClear = $("btnClear");
+  const btnCenter = $("btnCenter");
+  const btnExportSvg = $("btnExportSvg");
+  const btnThemeToggle = $("btnThemeToggle");
+
+  const appRoot = document.querySelector(".jsonviz-app");
+
+  let lastValidJson = null;
+
+  function setEditorStatus(ok, message) {
+    editorStatus.classList.toggle("jsonviz-status-ok", ok);
+    editorStatus.classList.toggle("jsonviz-status-error", !ok);
+    editorStatusText.textContent = message;
+  }
+
+  function updateCounts() {
+    const text = jsonInput.value || "";
+    const lines = text ? text.split(/\r\n|\r|\n/).length : 0;
+    lineCountEl.textContent = String(lines);
+    charCountEl.textContent = String(text.length);
+  }
+
+  function isPrimitive(value) {
+    return value === null || ["string", "number", "boolean"].includes(typeof value);
+  }
+
+  function toShortValue(value, maxLength) {
+    let repr;
+    if (typeof value === "string") repr = `"${value}"`;
+    else if (typeof value === "number" || typeof value === "boolean") repr = String(value);
+    else if (value === null) repr = "null";
+    else repr = JSON.stringify(value);
+    return repr.length > maxLength ? repr.slice(0, maxLength - 1) + "…" : repr;
+  }
+
+  function clearGraph() {
+    while (linksGroup.firstChild) linksGroup.removeChild(linksGroup.firstChild);
+    while (nodesGroup.firstChild) nodesGroup.removeChild(nodesGroup.firstChild);
+  }
+
+  function buildGraphStructure(data) {
+    let idCounter = 0;
+    const nodes = [];
+    const links = [];
+    let maxDepth = 0;
+
+    function createNode(labelKey, value, depth) {
+      const id = idCounter++;
+      let type = typeof value;
+
+      if (Array.isArray(value)) type = "array";
+      else if (value === null) type = "null";
+      else if (value && type === "object") type = "object";
+
+      const node = { id, key: labelKey, rawValue: value, type, depth, children: [] };
+      nodes.push(node);
+      maxDepth = Math.max(maxDepth, depth);
+
+      if (isPrimitive(value) || value === undefined) return node;
+
+      if (Array.isArray(value)) {
+        value.forEach((item, index) => {
+          const childNode = createNode(`[${index}]`, item, depth + 1);
+          links.push({ source: id, target: childNode.id });
+          node.children.push(childNode.id);
+        });
+      } else if (value && typeof value === "object") {
+        Object.keys(value).forEach((k) => {
+          const childNode = createNode(k, value[k], depth + 1);
+          links.push({ source: id, target: childNode.id });
+          node.children.push(childNode.id);
+        });
+      }
+      return node;
+    }
+
+    createNode("root", data, 0);
+    return { nodes, links, maxDepth: maxDepth + 1 };
+  }
+
+  function layoutTree(nodes, links) {
+    const childrenMap = new Map();
+    const parentMap = new Map();
+    nodes.forEach((n) => childrenMap.set(n.id, []));
+    links.forEach((l) => {
+      childrenMap.get(l.source).push(l.target);
+      parentMap.set(l.target, l.source);
+    });
+
+    const root = nodes.find((n) => !parentMap.has(n.id)) || nodes[0];
+    const position = new Map();
+    let nextY = 0;
+
+    const xGap = 160;
+    const yGap = 60;
+
+    function dfs(nodeId, depth) {
+      const children = childrenMap.get(nodeId) || [];
+      if (children.length === 0) {
+        const y = nextY * yGap;
+        position.set(nodeId, { x: depth * xGap, y });
+        nextY++;
+        return y;
+      }
+      let minY = Infinity;
+      let maxY = -Infinity;
+      children.forEach((childId) => {
+        const childY = dfs(childId, depth + 1);
+        minY = Math.min(minY, childY);
+        maxY = Math.max(maxY, childY);
+      });
+      const y = (minY + maxY) / 2;
+      position.set(nodeId, { x: depth * xGap, y });
+      return y;
+    }
+
+    dfs(root.id, 0);
+
+    return nodes.map((n) => {
+      const pos = position.get(n.id) || { x: 0, y: 0 };
+      return { id: n.id, x: pos.x, y: pos.y };
+    });
+  }
+
+  function getSvgPoint(evt) {
+    const pt = graphSvg.createSVGPoint();
+    pt.x = evt.clientX;
+    pt.y = evt.clientY;
+
+    const ctm = graphSvg.getScreenCTM();
+    if (!ctm) return { x: 0, y: 0 };
+
+    const p = pt.matrixTransform(ctm.inverse());
+    return { x: p.x, y: p.y };
+  }
+
+  function centerGraph() {
+    const wrapperRect = graphScroll.getBoundingClientRect();
+    const contentRect = graphInner.getBoundingClientRect();
+    const scrollLeft = (contentRect.width - wrapperRect.width) / 2;
+    const scrollTop = (contentRect.height - wrapperRect.height) / 2;
+    if (!Number.isNaN(scrollLeft) && !Number.isNaN(scrollTop)) {
+      graphScroll.scrollLeft = Math.max(0, scrollLeft);
+      graphScroll.scrollTop = Math.max(0, scrollTop);
+    }
+  }
+
+  function exportSvg() {
+    const serializer = new XMLSerializer();
+    const clonedSvg = graphSvg.cloneNode(true);
+    clonedSvg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+    clonedSvg.setAttribute("width", "1800");
+    clonedSvg.setAttribute("height", "1800");
+    const svgString = serializer.serializeToString(clonedSvg);
+
+    const blob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "json-graph.svg";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function renderGraph(data) {
+    clearGraph();
+
+    if (!data) {
+      graphEmpty.style.display = "flex";
+      nodeCountEl.textContent = "0";
+      maxDepthEl.textContent = "0";
+      return;
+    }
+
+    graphEmpty.style.display = "none";
+
+    const { nodes, links, maxDepth } = buildGraphStructure(data);
+    const positions = layoutTree(nodes, links);
+    const nodePositions = new Map(positions.map((p) => [p.id, { x: p.x, y: p.y }]));
+
+    nodeCountEl.textContent = String(nodes.length);
+    maxDepthEl.textContent = String(maxDepth);
+
+    const nodeWidth = 150;
+    const nodeHeight = 40;
+
+    function drawLinks() {
+      while (linksGroup.firstChild) linksGroup.removeChild(linksGroup.firstChild);
+
+      links.forEach((link) => {
+        const srcPos = nodePositions.get(link.source);
+        const tgtPos = nodePositions.get(link.target);
+        if (!srcPos || !tgtPos) return;
+
+        const x1 = srcPos.x + nodeWidth;
+        const y1 = srcPos.y + nodeHeight / 2;
+        const x2 = tgtPos.x;
+        const y2 = tgtPos.y + nodeHeight / 2;
+        const midX = (x1 + x2) / 2;
+
+        const pathData = `M ${x1} ${y1} C ${midX} ${y1}, ${midX} ${y2}, ${x2} ${y2}`;
+
+        const outer = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        outer.setAttribute("d", pathData);
+        outer.setAttribute("class", "graph-link graph-link-outer");
+        linksGroup.appendChild(outer);
+
+        const highlight = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        highlight.setAttribute("d", pathData);
+        highlight.setAttribute("class", "graph-link graph-link-highlight");
+        linksGroup.appendChild(highlight);
+
+        const main = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        main.setAttribute("d", pathData);
+        main.setAttribute("class", "graph-link");
+        linksGroup.appendChild(main);
+      });
+    }
+
+    drawLinks();
+
+    let dragging = null;
+
+    function onPointerMove(e) {
+      if (!dragging) return;
+
+      const { x, y } = getSvgPoint(e);
+      const newX = x - dragging.offsetX;
+      const newY = y - dragging.offsetY;
+
+      nodePositions.set(dragging.id, { x: newX, y: newY });
+
+      const g = document.querySelector(`g[data-node-id="${dragging.id}"]`);
+      if (g) g.setAttribute("transform", `translate(${newX}, ${newY})`);
+
+      drawLinks();
+    }
+
+    function stopDrag() {
+      if (!dragging) return;
+      dragging = null;
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", stopDrag);
+      window.removeEventListener("pointercancel", stopDrag);
+    }
+
+    nodes.forEach((node) => {
+      const pos = nodePositions.get(node.id);
+      if (!pos) return;
+
+      const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      g.setAttribute("class", "graph-node");
+      g.setAttribute("transform", `translate(${pos.x}, ${pos.y})`);
+      g.setAttribute("data-node-id", String(node.id));
+
+      if (node.depth === 0) g.classList.add("graph-node--root");
+      if (node.type === "object") g.classList.add("graph-node--object");
+      else if (node.type === "array") g.classList.add("graph-node--array");
+      else g.classList.add("graph-node--primitive");
+
+      const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      rect.setAttribute("width", String(nodeWidth));
+      rect.setAttribute("height", String(nodeHeight));
+      g.appendChild(rect);
+
+      const keyText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      keyText.setAttribute("x", "8");
+      keyText.setAttribute("y", "15");
+      keyText.setAttribute("class", "graph-node-key");
+      keyText.textContent = node.key;
+      g.appendChild(keyText);
+
+      const typeText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      typeText.setAttribute("x", "8");
+      typeText.setAttribute("y", "29");
+      typeText.setAttribute("class", "graph-node-type");
+      typeText.textContent = node.type;
+      g.appendChild(typeText);
+
+      if (isPrimitive(node.rawValue) && node.depth > 0) {
+        const valText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        valText.setAttribute("x", String(nodeWidth - 6));
+        valText.setAttribute("y", "15");
+        valText.setAttribute("text-anchor", "end");
+        valText.setAttribute("class", "graph-node-value");
+        valText.textContent = toShortValue(node.rawValue, 18);
+        g.appendChild(valText);
+      }
+
+      g.addEventListener("pointerdown", (e) => {
+        e.preventDefault();
+        try { g.setPointerCapture(e.pointerId); } catch {}
+
+        const p = getSvgPoint(e);
+        const current = nodePositions.get(node.id) || { x: 0, y: 0 };
+
+        dragging = {
+          id: node.id,
+          offsetX: p.x - current.x,
+          offsetY: p.y - current.y
+        };
+
+        window.addEventListener("pointermove", onPointerMove);
+        window.addEventListener("pointerup", stopDrag, { once: true });
+        window.addEventListener("pointercancel", stopDrag, { once: true });
+      });
+
+      nodesGroup.appendChild(g);
+    });
+
+    centerGraph();
+  }
+
+  function parseAndRender() {
+    const text = (jsonInput.value || "").trim();
+    updateCounts();
+
+    if (!text) {
+      lastValidJson = null;
+      setEditorStatus(false, "Waiting for JSON…");
+      errorText.textContent = "";
+      renderGraph(null);
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(text);
+      lastValidJson = parsed;
+      setEditorStatus(true, "Valid JSON");
+      errorText.textContent = "";
+      renderGraph(parsed);
+    } catch (err) {
+      setEditorStatus(false, "Invalid JSON");
+      errorText.textContent = err.message || "Invalid JSON";
+      renderGraph(lastValidJson ?? null);
+    }
+  }
+
+  function formatJson() {
+    const text = (jsonInput.value || "").trim();
+    if (!text) return;
+    try {
+      const parsed = JSON.parse(text);
+      jsonInput.value = JSON.stringify(parsed, null, 2);
+      parseAndRender();
+    } catch (err) {
+      setEditorStatus(false, "Cannot format: invalid JSON");
+      errorText.textContent = err.message || "Invalid JSON";
+    }
+  }
+
+  function loadSampleJson() {
+    const sample = {
+      app: "Local JSON Visualizer",
+      version: 1,
+      features: [
+        { name: "Graph view", enabled: true },
+        { name: "Drag nodes", enabled: true },
+        { name: "Theme toggle", enabled: true }
+      ],
+      user: { name: "You", roles: ["developer", "viewer"], preferences: { theme: "dark" } },
+      items: [
+        { id: 1, label: "Node A", tags: ["root", "entry"] },
+        { id: 2, label: "Node B", children: [1, 3] },
+        { id: 3, label: "Node C", meta: { archived: false } }
+      ],
+      flags: { offline: true }
+    };
+
+    jsonInput.value = JSON.stringify(sample, null, 2);
+    parseAndRender();
+  }
+
+  function clearEditor() {
+    jsonInput.value = "";
+    lastValidJson = null;
+    updateCounts();
+    setEditorStatus(false, "Waiting for JSON…");
+    errorText.textContent = "";
+    renderGraph(null);
+  }
+
+  function applyZoom(value) {
+    const scale = value / 100;
+    graphInner.style.transform = `scale(${scale})`;
+    zoomLabel.textContent = `${value}%`;
+  }
+
+  // Theme toggle + persistence
+  function setTheme(theme) {
+    appRoot.setAttribute("data-theme", theme);
+    localStorage.setItem("jsonviz_theme", theme);
+    btnThemeToggle.textContent = theme === "light" ? "☀️ Light" : "🌙 Dark";
+  }
+
+  btnThemeToggle.addEventListener("click", () => {
+    const current = appRoot.getAttribute("data-theme") || "dark";
+    setTheme(current === "dark" ? "light" : "dark");
+  });
+
+  // Wire events
+  jsonInput.addEventListener("input", parseAndRender);
+
+  jsonInput.addEventListener("keydown", (e) => {
+    if (e.key === "Tab") {
+      e.preventDefault();
+      const start = jsonInput.selectionStart;
+      const end = jsonInput.selectionEnd;
+      const value = jsonInput.value;
+      jsonInput.value = value.substring(0, start) + "  " + value.substring(end);
+      jsonInput.selectionStart = jsonInput.selectionEnd = start + 2;
+    }
+    if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+      e.preventDefault();
+      parseAndRender();
+    }
+  });
+
+  btnFormat.addEventListener("click", formatJson);
+  btnSample.addEventListener("click", loadSampleJson);
+  btnClear.addEventListener("click", clearEditor);
+  btnCenter.addEventListener("click", centerGraph);
+  btnExportSvg.addEventListener("click", exportSvg);
+
+  zoomRange.addEventListener("input", (e) => applyZoom(Number(e.target.value)));
+
+  // Init
+  applyZoom(Number(zoomRange.value));
+  const savedTheme = localStorage.getItem("jsonviz_theme") || "dark";
+  setTheme(savedTheme);
+  loadSampleJson();
+})();
+
+// ===== Chatbot toggle & iframe logic =====
+(function () {
+  const btnChatbotLogo = document.getElementById("btnChatbotLogo");
+  const chatbotContainer = document.getElementById("chatbotContainer");
+  const chatbotIframe = document.getElementById("chatbotIframe");
+  const btnCloseChatbot = document.getElementById("btnCloseChatbot");
+
+  const CHATBOT_URL =
+    "https://staging.uipath.com/uipath_tsp/DefaultTenant/autopilotforeveryone_/conversational-agents/?" +
+    "agentId=1598318&mode=embedded&title=Welcome%20To%20Co-developer&welcomeTitle=Co-developer&" +
+    "welcomeDescription=MFKHAN&suggestions=%5B%22MathServer%22,%22WebSearch%22%5D";
+
+  let chatbotVisible = false;
+
+  function showChatbot() {
+    if (!chatbotIframe.src) chatbotIframe.src = CHATBOT_URL;
+    chatbotContainer.style.display = "flex";
+    chatbotContainer.setAttribute("aria-hidden", "false");
+    chatbotVisible = true;
+  }
+
+  function hideChatbot() {
+    chatbotContainer.style.display = "none";
+    chatbotContainer.setAttribute("aria-hidden", "true");
+    chatbotVisible = false;
+  }
+
+  if (btnChatbotLogo) {
+    btnChatbotLogo.addEventListener("click", function (e) {
+      e.preventDefault();
+      if (chatbotVisible) hideChatbot();
+      else showChatbot();
+    });
+  }
+
+  if (btnCloseChatbot) {
+    btnCloseChatbot.addEventListener("click", function (e) {
+      e.preventDefault();
+      hideChatbot();
+    });
+  }
+
+  window.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && chatbotVisible) hideChatbot();
+  });
+})();
