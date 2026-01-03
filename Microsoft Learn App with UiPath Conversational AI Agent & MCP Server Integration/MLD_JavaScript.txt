@@ -1,0 +1,222 @@
+// Paste inside: <script> ... </script>
+(() => {
+  const root = document.getElementById("learnhub");
+  if (!root) return;
+
+  const $ = (q, el = root) => el.querySelector(q);
+  const $$ = (q, el = root) => Array.from(el.querySelectorAll(q));
+
+  // Reveal on scroll
+  const revealEls = $$(".reveal");
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((ent) => {
+      if (ent.isIntersecting) ent.target.classList.add("is-in");
+    });
+  }, { threshold: 0.15 });
+  revealEls.forEach(el => io.observe(el));
+
+  // Theme
+  const themeToggle = $("#themeToggle");
+  const themeIcon = $("#themeIcon");
+  const THEME_KEY = "lh_theme_inline";
+
+  function iconFor(theme) { if (themeIcon) themeIcon.textContent = theme === "light" ? "☀️" : "🌙"; }
+  function setTheme(theme) {
+    root.setAttribute("data-theme", theme);
+    try { localStorage.setItem(THEME_KEY, theme); } catch {}
+    iconFor(theme);
+  }
+  let savedTheme = "dark";
+  try { savedTheme = localStorage.getItem(THEME_KEY) || "dark"; } catch {}
+  setTheme(savedTheme);
+
+  themeToggle?.addEventListener("click", () => {
+    const current = root.getAttribute("data-theme") || "dark";
+    setTheme(current === "dark" ? "light" : "dark");
+  });
+
+  // Smooth scroll inside wrapper (more reliable in Apps than hash navigation)
+  function scrollToId(id) {
+    const el = root.querySelector(id);
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+  root.addEventListener("click", (e) => {
+    const a = e.target?.closest?.("[data-lh-scroll]");
+    if (!a) return;
+    e.preventDefault();
+    const target = a.getAttribute("data-lh-scroll");
+    if (target) scrollToId(target);
+  });
+
+  // Mobile drawer
+  const drawer = $("#drawer");
+  const menuBtn = $("#menuBtn");
+  const closeDrawer = $("#closeDrawer");
+
+  function openDrawer() {
+    drawer?.classList.add("is-open");
+    drawer?.setAttribute("aria-hidden", "false");
+  }
+  function closeDrawerFn() {
+    drawer?.classList.remove("is-open");
+    drawer?.setAttribute("aria-hidden", "true");
+  }
+  menuBtn?.addEventListener("click", openDrawer);
+  closeDrawer?.addEventListener("click", closeDrawerFn);
+  drawer?.addEventListener("click", (e2) => {
+    const t = e2.target;
+    if (t?.hasAttribute?.("data-close-drawer")) closeDrawerFn();
+    if (t?.tagName === "A") closeDrawerFn();
+  });
+
+  // Toast
+  const toast = $("#toast");
+  let toastTimer = null;
+  function showToast(msg) {
+    if (!toast) return;
+    toast.textContent = msg;
+    toast.classList.add("is-show");
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove("is-show"), 2600);
+  }
+
+  // “Search” demo
+  const searchInput = $("#searchInput");
+  const searchBtn = $("#searchBtn");
+  function doSearch() {
+    const q = (searchInput?.value || "").trim();
+    if (!q) return showToast("Type something to search (demo).");
+    showToast(`Searching for “${q}” (demo)…`);
+  }
+  searchBtn?.addEventListener("click", doSearch);
+  searchInput?.addEventListener("keydown", (e3) => { if (e3.key === "Enter") doSearch(); });
+
+  // Chat widget
+  const cbFab = $("#cbFab");
+  const cbPanel = $("#cbPanel");
+  const cbClose = $("#cbClose");
+  const cbReload = $("#cbReload");
+  const cbFrame = $("#cbFrame");
+  const CB_KEY = "lh_chat_open_iframe_inline";
+
+  function openChat() {
+    cbPanel?.classList.add("is-open");
+    cbPanel?.setAttribute("aria-hidden", "false");
+    try { localStorage.setItem(CB_KEY, "1"); } catch {}
+  }
+  function closeChat() {
+    cbPanel?.classList.remove("is-open");
+    cbPanel?.setAttribute("aria-hidden", "true");
+    try { localStorage.setItem(CB_KEY, "0"); } catch {}
+  }
+  function toggleChat() { cbPanel?.classList.contains("is-open") ? closeChat() : openChat(); }
+
+  cbFab?.addEventListener("click", toggleChat);
+  cbClose?.addEventListener("click", closeChat);
+
+  cbReload?.addEventListener("click", () => {
+    if (!cbFrame) return;
+    const src = cbFrame.getAttribute("src");
+    cbFrame.setAttribute("src", src);
+  });
+
+  document.addEventListener("keydown", (e4) => {
+    if (e4.key === "Escape" && cbPanel?.classList.contains("is-open")) closeChat();
+  });
+
+  try { if (localStorage.getItem(CB_KEY) === "1") openChat(); } catch {}
+
+  $("#openAssistantFromModules")?.addEventListener("click", openChat);
+  $("#openAssistantFromResources")?.addEventListener("click", openChat);
+
+  // Mic → Speech-to-text → send to iframe (postMessage + clipboard fallback)
+  const cbMic = $("#cbMic");
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  let rec = null;
+  let isRecording = false;
+
+  function setMicState(on) {
+    if (!cbMic) return;
+    cbMic.classList.toggle("is-rec", on);
+    cbMic.textContent = on ? "🛑" : "🎙️";
+    cbMic.setAttribute("aria-label", on ? "Stop speaking" : "Speak to chatbot");
+  }
+
+  function trySendToAgent(text) {
+    if (cbPanel && !cbPanel.classList.contains("is-open")) openChat();
+
+    try {
+      const win = cbFrame?.contentWindow;
+      if (win) {
+        const payloads = [
+          { type: "USER_MESSAGE", text },
+          { type: "chat.message", text },
+          { event: "message", text },
+          { kind: "user_input", value: text },
+          { source: "learnhub-site", text }
+        ];
+        payloads.forEach(p => win.postMessage(p, "*"));
+      }
+    } catch {}
+
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(text).then(() => {
+        showToast("Voice captured. Copied to clipboard — paste into chat.");
+      }).catch(() => {
+        showToast(`Voice captured: "${text}"`);
+      });
+    } else {
+      showToast(`Voice captured: "${text}"`);
+    }
+  }
+
+  function startRecording() {
+    if (!SpeechRecognition) {
+      showToast("Mic not supported in this browser. Try Chrome/Edge.");
+      return;
+    }
+    if (isRecording) return;
+
+    rec = new SpeechRecognition();
+    rec.lang = "en-US"; // change to "en-IN" / "hi-IN" if needed
+    rec.interimResults = false;
+    rec.continuous = false;
+
+    rec.onstart = () => {
+      isRecording = true;
+      setMicState(true);
+      showToast("Listening…");
+    };
+    rec.onerror = (ev) => {
+      isRecording = false;
+      setMicState(false);
+      showToast(`Mic error: ${ev?.error || "unknown"}`);
+    };
+    rec.onend = () => {
+      isRecording = false;
+      setMicState(false);
+    };
+    rec.onresult = (ev) => {
+      const text = Array.from(ev.results || [])
+        .map(r => r?.[0]?.transcript || "")
+        .join(" ")
+        .trim();
+      if (text) trySendToAgent(text);
+    };
+
+    rec.start();
+  }
+
+  function stopRecording() {
+    try { rec?.stop(); } catch {}
+    isRecording = false;
+    setMicState(false);
+  }
+
+  cbMic?.addEventListener("click", () => {
+    if (isRecording) stopRecording();
+    else startRecording();
+  });
+})();

@@ -1,0 +1,386 @@
+<div id="learnhub" data-theme="dark">
+  <div class="bg" aria-hidden="true">
+    <div class="bg__mesh"></div>
+    <div class="bg__noise"></div>
+  </div>
+
+  <header class="header" id="top">
+    <div class="container header__inner">
+      <a class="brand" href="#top" aria-label="LearnHub home" data-lh-scroll="#top">
+        <span class="brand__mark" aria-hidden="true">LH</span>
+        <span class="brand__text">
+          <span class="brand__name">LearnHub</span>
+          <span class="brand__tag">Docs • Modules • Paths</span>
+        </span>
+      </a>
+
+      <nav class="nav" aria-label="Primary navigation">
+        <a href="#docs" data-lh-scroll="#docs">Documentation</a>
+        <a href="#modules" data-lh-scroll="#modules">Modules</a>
+        <a href="#paths" data-lh-scroll="#paths">Learning Paths</a>
+        <a href="#resources" data-lh-scroll="#resources">Resources</a>
+      </nav>
+
+      <div class="header__actions">
+        <button class="iconbtn" id="themeToggle" type="button" aria-label="Toggle theme">
+          <span class="iconbtn__text" id="themeIcon">🌙</span>
+        </button>
+        <a class="btn btn--primary" href="#modules" data-lh-scroll="#modules">Start learning</a>
+        <button class="iconbtn iconbtn--menu" id="menuBtn" type="button" aria-label="Open menu">
+          <span class="hamburger" aria-hidden="true"></span>
+        </button>
+      </div>
+    </div>
+
+    <div class="drawer" id="drawer" aria-hidden="true">
+      <div class="drawer__panel" role="dialog" aria-label="Mobile navigation">
+        <div class="drawer__top">
+          <span class="drawer__title">Navigate</span>
+          <button class="iconbtn" id="closeDrawer" type="button" aria-label="Close menu">✕</button>
+        </div>
+        <div class="drawer__links">
+          <a href="#docs" data-lh-scroll="#docs">Documentation</a>
+          <a href="#modules" data-lh-scroll="#modules">Modules</a>
+          <a href="#paths" data-lh-scroll="#paths">Learning Paths</a>
+          <a href="#resources" data-lh-scroll="#resources">Resources</a>
+        </div>
+      </div>
+      <div class="drawer__backdrop" data-close-drawer></div>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- HERO -->
+    <section class="hero">
+      <div class="container hero__grid">
+        <div class="reveal">
+          <div class="pill">Learn • Build • Validate</div>
+          <h1>Upskill with <span class="grad">guided</span> modules and <span class="grad">hands-on</span> docs.</h1>
+          <p class="lead">
+            LearnHub is a Learn-style template for product documentation, training modules, learning paths,
+            and a built-in assistant widget.
+          </p>
+
+          <div class="card search reveal" style="margin-top: 12px;">
+            <div class="search__row">
+              <input id="searchInput" type="search" placeholder="Search docs, modules, and topics…" aria-label="Search" />
+              <button class="btn btn--primary" id="searchBtn" type="button">Search</button>
+            </div>
+            <div class="kpi">
+              <span class="pill">Docs</span>
+              <span class="pill">Modules</span>
+              <span class="pill">Paths</span>
+              <span class="pill">Samples</span>
+            </div>
+          </div>
+        </div>
+
+        <aside class="card reveal" style="padding:16px; border-radius: var(--radius2);">
+          <div style="display:flex; justify-content: space-between; gap: 10px; align-items:flex-start;">
+            <div>
+              <div style="color:var(--muted); font-size:12px;">Recommended</div>
+              <div style="font-weight:800; margin-top:4px;">Start here</div>
+            </div>
+            <span class="pill" style="font-size:12px;">Updated weekly</span>
+          </div>
+
+          <div style="display:grid; gap:10px; margin-top: 12px;">
+            <a class="card tile" href="#paths" data-lh-scroll="#paths">
+              <div class="tile__top">
+                <div>
+                  <h3>Learning path: Foundations</h3>
+                  <p>Core concepts, best practices, and workflows.</p>
+                </div>
+                <span class="tile__badge">Path</span>
+              </div>
+              <div class="list__meta">6 modules • ~3h</div>
+            </a>
+
+            <a class="card tile" href="#modules" data-lh-scroll="#modules">
+              <div class="tile__top">
+                <div>
+                  <h3>Module: Build your first agent</h3>
+                  <p>Tools, guardrails, and evaluation basics.</p>
+                </div>
+                <span class="tile__badge">Module</span>
+              </div>
+              <div class="list__meta">10 units • ~45m</div>
+            </a>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- DOCS -->
+    <section class="section" id="docs">
+      <div class="container">
+        <div class="reveal" style="display:flex; justify-content:space-between; gap:16px; align-items:flex-end; margin-bottom: 16px;">
+          <div>
+            <h2 style="margin:0; font-size: clamp(24px, 3vw, 34px);">Documentation</h2>
+            <p style="margin:6px 0 0; color: var(--muted); max-width: 720px;">
+              Reference docs organized by product area, with quickstarts and how-to guides.
+            </p>
+          </div>
+          <a class="btn btn--ghost" href="#resources" data-lh-scroll="#resources">Browse resources</a>
+        </div>
+
+        <div class="grid grid--3">
+          <article class="card tile reveal">
+            <div class="tile__top">
+              <div>
+                <h3>Quickstarts</h3>
+                <p>Get running fast with minimal setup.</p>
+              </div>
+              <span class="tile__badge">Docs</span>
+            </div>
+            <div class="list__meta">8 guides</div>
+          </article>
+
+          <article class="card tile reveal">
+            <div class="tile__top">
+              <div>
+                <h3>How-to Guides</h3>
+                <p>Step-by-step instructions for common tasks.</p>
+              </div>
+              <span class="tile__badge">Docs</span>
+            </div>
+            <div class="list__meta">26 articles</div>
+          </article>
+
+          <article class="card tile reveal">
+            <div class="tile__top">
+              <div>
+                <h3>API Reference</h3>
+                <p>Endpoints, schemas, auth, and examples.</p>
+              </div>
+              <span class="tile__badge">API</span>
+            </div>
+            <div class="list__meta">REST + Webhooks</div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- MODULES -->
+    <section class="section" id="modules">
+      <div class="container">
+        <div class="reveal" style="display:flex; justify-content:space-between; gap:16px; align-items:flex-end; margin-bottom: 16px;">
+          <div>
+            <h2 style="margin:0; font-size: clamp(24px, 3vw, 34px);">Modules</h2>
+            <p style="margin:6px 0 0; color: var(--muted); max-width: 720px;">
+              Bite-sized lessons: short units with objectives and checkpoints.
+            </p>
+          </div>
+          <button class="btn btn--primary btn--small" id="openAssistantFromModules" type="button">Ask the assistant</button>
+        </div>
+
+        <div class="grid grid--3">
+          <article class="card tile reveal">
+            <div class="tile__top">
+              <div>
+                <h3>Intro to agent workflows</h3>
+                <p>Planning, tools, memory, and constraints.</p>
+              </div>
+              <span class="tile__badge">45m</span>
+            </div>
+            <div class="list__meta">10 units • Beginner</div>
+          </article>
+
+          <article class="card tile reveal">
+            <div class="tile__top">
+              <div>
+                <h3>Retrieval & citations</h3>
+                <p>RAG patterns, chunking, and evaluation.</p>
+              </div>
+              <span class="tile__badge">60m</span>
+            </div>
+            <div class="list__meta">12 units • Intermediate</div>
+          </article>
+
+          <article class="card tile reveal">
+            <div class="tile__top">
+              <div>
+                <h3>Security & guardrails</h3>
+                <p>PII, policy checks, and audit trails.</p>
+              </div>
+              <span class="tile__badge">50m</span>
+            </div>
+            <div class="list__meta">9 units • Intermediate</div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- PATHS -->
+    <section class="section" id="paths">
+      <div class="container">
+        <div class="reveal" style="display:flex; justify-content:space-between; gap:16px; align-items:flex-end; margin-bottom: 16px;">
+          <div>
+            <h2 style="margin:0; font-size: clamp(24px, 3vw, 34px);">Learning paths</h2>
+            <p style="margin:6px 0 0; color: var(--muted); max-width: 720px;">
+              Curated sequences of modules with a clear outcome.
+            </p>
+          </div>
+          <a class="btn btn--ghost" href="#docs" data-lh-scroll="#docs">Back to docs</a>
+        </div>
+
+        <div class="grid grid--2">
+          <article class="card list reveal">
+            <div class="list__row">
+              <div>
+                <div style="font-weight:800;">Foundations</div>
+                <div class="list__meta">6 modules • ~3 hours</div>
+              </div>
+              <span class="pill">Beginner</span>
+            </div>
+            <div class="list__row">
+              <div>
+                <div style="font-weight:700;">Build a safe assistant</div>
+                <div class="list__meta">Guardrails, RAG, and eval</div>
+              </div>
+              <span class="pill">Intermediate</span>
+            </div>
+            <div class="list__row">
+              <div>
+                <div style="font-weight:700;">Deploy & observe</div>
+                <div class="list__meta">Telemetry, logs, and feedback loops</div>
+              </div>
+              <span class="pill">Intermediate</span>
+            </div>
+          </article>
+
+          <article class="card list reveal">
+            <div class="list__row">
+              <div>
+                <div style="font-weight:800;">Enterprise rollout</div>
+                <div class="list__meta">5 modules • ~2.5 hours</div>
+              </div>
+              <span class="pill">Advanced</span>
+            </div>
+            <div class="list__row">
+              <div>
+                <div style="font-weight:700;">RBAC & approvals</div>
+                <div class="list__meta">Human-in-the-loop controls</div>
+              </div>
+              <span class="pill">Advanced</span>
+            </div>
+            <div class="list__row">
+              <div>
+                <div style="font-weight:700;">Compliance & auditing</div>
+                <div class="list__meta">Policy, retention, reporting</div>
+              </div>
+              <span class="pill">Advanced</span>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- RESOURCES -->
+    <section class="section" id="resources">
+      <div class="container">
+        <div class="reveal" style="display:flex; justify-content:space-between; gap:16px; align-items:flex-end; margin-bottom: 16px;">
+          <div>
+            <h2 style="margin:0; font-size: clamp(24px, 3vw, 34px);">Resources</h2>
+            <p style="margin:6px 0 0; color: var(--muted); max-width: 720px;">
+              Samples, templates, and best practices you can reuse.
+            </p>
+          </div>
+          <button class="btn btn--primary btn--small" id="openAssistantFromResources" type="button">Open assistant</button>
+        </div>
+
+        <div class="grid grid--3">
+          <article class="card tile reveal">
+            <div class="tile__top">
+              <div>
+                <h3>Sample projects</h3>
+                <p>Starter repositories and patterns.</p>
+              </div>
+              <span class="tile__badge">Code</span>
+            </div>
+            <div class="list__meta">Templates • Examples • Snippets</div>
+          </article>
+
+          <article class="card tile reveal">
+            <div class="tile__top">
+              <div>
+                <h3>Architecture</h3>
+                <p>Reference diagrams and decision records.</p>
+              </div>
+              <span class="tile__badge">Design</span>
+            </div>
+            <div class="list__meta">RAG • Tools • Observability</div>
+          </article>
+
+          <article class="card tile reveal">
+            <div class="tile__top">
+              <div>
+                <h3>Security checklist</h3>
+                <p>Hardening, PII, and safe defaults.</p>
+              </div>
+              <span class="tile__badge">Secure</span>
+            </div>
+            <div class="list__meta">Controls • Threat model • Audit</div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div class="container footer__inner">
+        <div>
+          <div style="display:flex; gap:10px; align-items:center;">
+            <span class="brand__mark" aria-hidden="true" style="width:34px;height:34px;border-radius:14px;">LH</span>
+            <div>
+              <div style="font-weight:800;">LearnHub</div>
+              <div class="footer__small">A Learn-style template with embedded assistant</div>
+            </div>
+          </div>
+          <div class="footer__small">Replace branding, links, and content with your own.</div>
+        </div>
+        <div style="display:flex; gap:12px; flex-wrap:wrap; justify-content:flex-end;">
+          <a class="footer__small" href="#top" data-lh-scroll="#top">Top</a>
+          <a class="footer__small" href="#docs" data-lh-scroll="#docs">Docs</a>
+          <a class="footer__small" href="#modules" data-lh-scroll="#modules">Modules</a>
+          <a class="footer__small" href="#paths" data-lh-scroll="#paths">Paths</a>
+        </div>
+      </div>
+    </footer>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+
+  <div class="cb" aria-label="Chatbot widget">
+    <button class="cb__fab" id="cbFab" type="button" aria-label="Open chatbot">
+      <span aria-hidden="true">💬</span>
+    </button>
+
+    <section class="cb__panel" id="cbPanel" aria-hidden="true" role="dialog" aria-label="Assistant">
+      <header class="cb__head">
+        <div class="cb__title">
+          <span class="cb__dot" aria-hidden="true"></span>
+          LearnHub Assistant
+        </div>
+
+        <div class="cb__actions">
+          <button class="cb__iconbtn" id="cbReload" type="button" aria-label="Reload chatbot">⟳</button>
+          <button class="cb__iconbtn" id="cbMic" type="button" aria-label="Speak to chatbot" title="Speak">🎙️</button>
+          <button class="cb__iconbtn" id="cbClose" type="button" aria-label="Close chatbot">✕</button>
+        </div>
+      </header>
+
+      <div class="cb__framewrap">
+        <iframe
+          id="cbFrame"
+          class="cb__iframe"
+          title="Assistant"
+          src="https://staging.uipath.com/uipath_tsp/DefaultTenant/autopilotforeveryone_/conversational-agents/?agentId=1598318&mode=embedded&title=LearnHub&welcomeTitle=UiPath"
+          loading="lazy"
+          referrerpolicy="no-referrer"
+          allow="microphone"
+          sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-downloads"
+        ></iframe>
+      </div>
+    </section>
+  </div>
+</div>
