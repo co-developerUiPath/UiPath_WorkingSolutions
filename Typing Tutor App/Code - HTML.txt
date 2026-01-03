@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <title>Typing Tutor (UiPath HTMLControl)</title>
+
+  <!-- Link external CSS when hosted as files -->
+  <!-- <link rel="stylesheet" href="styles.css"> -->
+
+  <!-- If UiPath requires single paste, copy styles.css into a <style> tag here. -->
+</head>
+
+<body data-theme="dark">
+  <input id="capture" autocomplete="off" autocapitalize="off" spellcheck="false" />
+
+  <!-- Onboarding -->
+  <div class="overlay show" id="overlay" role="dialog" aria-modal="true" aria-label="Onboarding">
+    <div class="modal">
+      <div class="modalTop">
+        <div class="brand">
+          <div class="logo" aria-hidden="true"></div>
+          <div class="title">
+            <h2>Typing Tutor</h2>
+            <p>Choose a mode, then press <strong>Enter</strong>. Tap the text card to focus on mobile.</p>
+          </div>
+        </div>
+      </div>
+      <div class="modalGrid">
+        <div>
+          <div class="bigChoices" id="onboardChoices" aria-label="Practice modes"></div>
+          <div style="margin-top:12px;">
+            <div class="row">
+              <button class="btn btnPrimary" id="btnEnterApp" type="button">Enter</button>
+              <button class="btn btnGhost" id="btnCloseOverlay" type="button">Close</button>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="callout">
+            <strong>How to use</strong><br/>
+            • Start → type exactly what you see<br/>
+            • Backspace to correct<br/>
+            • Skip adds a small penalty<br/><br/>
+            <strong>Smart difficulty</strong><br/>
+            Each mode increases complexity if your WPM + accuracy improve.
+          </div>
+          <div class="callout" style="margin-top:10px;">
+            <strong>UiPath integration</strong><br/>
+            Sends results via <code>window.postMessage</code> after each session.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="app" id="app">
+    <header>
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div class="title">
+          <h1>Typing Tutor</h1>
+          <div class="sub">Offline • Vanilla JS • UiPath Apps HTMLControl</div>
+        </div>
+      </div>
+      <div class="topActions">
+        <button class="btn btnGhost" id="btnShowOnboarding" type="button">Onboarding</button>
+        <button class="btn btnGhost" id="btnFocus" type="button">Focus</button>
+        <button class="btn btnGhost" id="btnTheme" type="button">Theme</button>
+      </div>
+    </header>
+
+    <main>
+      <!-- LEFT -->
+      <section class="card" aria-label="Practice">
+        <div class="cardHead">
+          <div class="label">
+            <span>Practice</span>
+            <span class="pill" id="modePill">Mode: Email & Work Chat</span>
+            <span class="pill" id="difficultyPill">Difficulty: 1/5</span>
+          </div>
+          <span class="pill" id="statusPill">Idle</span>
+        </div>
+        <div class="cardBody">
+          <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between;align-items:center">
+            <div class="hint" id="hintText">
+              Tap the text card to focus. Type with keyboard or use the on-screen keys.
+            </div>
+            <div class="chips">
+              <span class="chip" id="sessionChip">Session: Timed 60s</span>
+              <span class="chip" id="targetChip">Target: 35 WPM</span>
+            </div>
+          </div>
+
+          <div class="viewport" id="textViewport" tabindex="0" role="button" aria-label="Tap to focus typing input">
+            <div class="scroller" id="textScroller">
+              <div class="text" id="practiceText" aria-label="Text to type"></div>
+            </div>
+            <div class="toast" id="mistakeToast" role="status" aria-live="polite"></div>
+          </div>
+
+          <div class="card" style="margin-top:12px;box-shadow:var(--shadow2);border-radius:var(--r2)">
+            <div class="cardHead" style="padding:10px 10px 8px">
+              <div class="label">
+                <span>Keyboard</span>
+                <span class="pill" id="nextKeyPill">Next: —</span>
+              </div>
+              <span class="pill">Tap keys (mobile) • Hardware OK</span>
+            </div>
+            <div class="cardBody" style="padding:10px">
+              <div class="kbd" id="keyboard" aria-label="On-screen keyboard"></div>
+              <div class="tiny" style="margin-top:8px;">
+                Highlights the next expected character. If you make a mistake, it warns.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT -->
+      <aside style="display:grid;gap:12px">
+        <section class="card" aria-label="Dashboard">
+          <div class="cardHead">
+            <div class="label"><span>Dashboard</span><span class="pill" id="controlPill">Ready</span></div>
+            <span class="pill" id="bestPill">Best: —</span>
+          </div>
+          <div class="cardBody">
+            <div class="grid2" id="hudGrid"></div>
+            <div class="field" style="margin-top:12px;margin-bottom:0">
+              <label for="livePost">Live postMessage updates</label>
+              <div class="toggle">
+                <input id="livePost" type="checkbox"/>
+                <span class="tiny">Send <code>typingLive</code> every few seconds</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card" aria-label="Mode selector">
+          <div class="cardHead">
+            <div class="label"><span>Practice modes</span></div>
+            <span class="pill" id="timePill">Time: 00:00</span>
+          </div>
+          <div class="cardBody">
+            <div class="modes" id="modeButtons"></div>
+
+            <div id="customBox" style="display:none;margin-top:12px;">
+              <div class="field">
+                <label for="customText">Custom text</label>
+                <textarea class="textarea" id="customText" placeholder="Paste your own paragraph here..."></textarea>
+              </div>
+              <button class="btn btnGhost" id="btnUseCustom" type="button">Use Custom Text</button>
+            </div>
+          </div>
+        </section>
+      </aside>
+    </main>
+
+    <!-- Bottom controls -->
+    <footer>
+      <section class="card" aria-label="Controls">
+        <div class="cardHead">
+          <div class="label"><span>Controls</span></div>
+          <span class="pill" id="timePill2">Time: 00:00</span>
+        </div>
+        <div class="cardBody">
+          <div class="controlsGrid">
+            <div>
+              <div class="row">
+                <button class="btn btnPrimary" id="btnStart" type="button">Start</button>
+                <button class="btn btnGhost" id="btnPause" type="button">Pause</button>
+                <button class="btn btnDanger" id="btnRestart" type="button">Restart</button>
+              </div>
+              <div class="row" style="margin-top:10px">
+                <button class="btn btnGhost" id="btnSkip" type="button">Skip (Penalty)</button>
+                <button class="btn btnGhost" id="btnNextText" type="button">Next Text</button>
+              </div>
+            </div>
+
+            <div>
+              <div class="field">
+                <label for="sessionKind">Session type</label>
+                <select class="select" id="sessionKind">
+                  <option value="timed">Timed test</option>
+                  <option value="paragraph">By paragraph</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="preset">Duration / paragraphs</label>
+                <select class="select" id="preset"></select>
+              </div>
+            </div>
+
+            <div>
+              <div class="tog">
+                <label class="toggle"><input id="soundToggle" type="checkbox"/> <span>Sound</span></label>
+                <label class="toggle"><input id="strictToggle" type="checkbox" checked/> <span>Strict</span></label>
+              </div>
+              <div class="tiny" style="margin-top:10px">
+                Strict: must match each character to move forward. Turn off for a looser flow.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </footer>
+  </div>
+
+  <!-- Link external JS when hosted as files -->
+  <!-- <script src="app.js"></script> -->
+
+  <!-- If UiPath requires single paste, copy app.js into a <script> tag here. -->
+</body>
+</html>

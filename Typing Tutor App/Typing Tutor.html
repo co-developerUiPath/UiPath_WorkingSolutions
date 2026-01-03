@@ -1,0 +1,1299 @@
+<!--
+============================================================
+UiPath Apps → HTMLControl: Typing Tutor (Offline, Single File)
+============================================================
+
+A) Paste into UiPath Apps HTMLControl
+1) Add an HTML Control → paste this full HTML into it.
+2) Run. Tap the big text card to focus; type with hardware keyboard or on-screen keys.
+
+B) Easy config (search "CONFIG")
+- Theme default, duration presets, live postMessage frequency
+- Text packs
+- 3D intensity (kept subtle)
+
+C) postMessage integration
+- Session end:
+  { type:"typingStats", wpm, accuracy, errors, mode, duration, sessionKind, timestamp }
+- Live (optional):
+  { type:"typingLive", wpm, accuracy, errors, timeLeft, streak, mode, timestamp }
+
+Sent via: window.parent.postMessage(payload, "*");
+
+============================================================
+-->
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <title>Typing Tutor (UiPath HTMLControl)</title>
+
+  <style>
+    /* ===== Subtle 3D (light touch): small tilt + soft shadows ===== */
+    :root{
+      --bg:#0b1220; --bg2:#0a0f1a;
+      --panel: rgba(255,255,255,.06);
+      --panel2: rgba(255,255,255,.09);
+      --stroke: rgba(255,255,255,.12);
+      --stroke2: rgba(255,255,255,.18);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.68);
+      --good:#34d399; --bad:#fb7185; --accent:#60a5fa;
+      --shadow: 0 14px 34px rgba(0,0,0,.38);
+      --shadow2: 0 8px 18px rgba(0,0,0,.26);
+      --inset: inset 0 1px 0 rgba(255,255,255,.12);
+      --r: 16px; --r2: 12px;
+      --tap: 48px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+    }
+    [data-theme="light"]{
+      --bg:#f5f7fb; --bg2:#eef2ff;
+      --panel: rgba(10,18,32,.06);
+      --panel2: rgba(10,18,32,.08);
+      --stroke: rgba(10,18,32,.10);
+      --stroke2: rgba(10,18,32,.16);
+      --text: rgba(10,18,32,.92);
+      --muted: rgba(10,18,32,.65);
+      --shadow: 0 14px 34px rgba(10,18,32,.16);
+      --shadow2: 0 8px 18px rgba(10,18,32,.12);
+      --inset: inset 0 1px 0 rgba(255,255,255,.55);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family:var(--font); color:var(--text);
+      background:
+        radial-gradient(900px 500px at 20% 10%, rgba(96,165,250,.14), transparent 55%),
+        radial-gradient(900px 500px at 80% 15%, rgba(167,139,250,.12), transparent 55%),
+        linear-gradient(180deg,var(--bg),var(--bg2));
+      -webkit-font-smoothing:antialiased;
+      touch-action: manipulation;
+    }
+
+    /* ===== Layout ===== */
+    .app{max-width:1180px;margin:0 auto;min-height:100%;padding:14px;display:grid;grid-template-rows:auto 1fr auto;gap:12px}
+    header,.card{border-radius:var(--r);background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--stroke);box-shadow:var(--shadow)}
+    header{padding:12px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+    .brand{display:flex;gap:10px;align-items:center;user-select:none}
+    .logo{width:40px;height:40px;border-radius:14px;background:linear-gradient(135deg,rgba(96,165,250,.90),rgba(167,139,250,.86));box-shadow:var(--shadow2);border:1px solid rgba(255,255,255,.18)}
+    .title{display:grid;gap:2px}
+    .title h1{margin:0;font-size:16px;line-height:1.1}
+    .title .sub{font-size:12px;color:var(--muted)}
+    .topActions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+
+    main{display:grid;grid-template-columns:1.35fr .65fr;gap:12px;align-items:start}
+    @media (max-width:920px){main{grid-template-columns:1fr}}
+
+    .card{overflow:hidden}
+    .cardHead{padding:12px 12px 8px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+    .label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.25px;display:flex;gap:8px;align-items:center}
+    .pill{font-size:12px;color:var(--muted);padding:6px 10px;border-radius:999px;border:1px solid var(--stroke2);background:rgba(255,255,255,.05);box-shadow:var(--inset);user-select:none}
+    .cardBody{padding:12px}
+
+    /* ===== Controls / Buttons ===== */
+    .btn{
+      border:1px solid var(--stroke2);
+      background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.05));
+      color:var(--text);
+      border-radius:14px;
+      min-height:var(--tap);
+      padding:10px 14px;
+      font-weight:700;
+      cursor:pointer;
+      box-shadow:var(--shadow2), var(--inset);
+      transition:transform .12s ease, filter .12s ease;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .btn:hover{filter:brightness(1.03)}
+    .btn:active{transform:translateY(1px)}
+    .btn:focus-visible{outline:3px solid rgba(96,165,250,.45);outline-offset:2px}
+    .btnPrimary{background:linear-gradient(180deg,rgba(96,165,250,.95),rgba(167,139,250,.86));color:rgba(10,18,32,.92);border-color:rgba(255,255,255,.22)}
+    .btnDanger{background:linear-gradient(180deg,rgba(251,113,133,.92),rgba(251,191,36,.70));color:rgba(10,18,32,.92);border-color:rgba(255,255,255,.22)}
+    .btnGhost{background:rgba(255,255,255,.05);border:1px solid var(--stroke);color:var(--text);font-weight:650}
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+    .row .btn{flex:1 1 150px}
+
+    /* ===== Practice Text ===== */
+    .hint{font-size:13px;color:var(--muted);line-height:1.35;max-width:60ch}
+    .chips{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .chip{font-size:12px;color:var(--muted);padding:6px 10px;border-radius:999px;border:1px solid var(--stroke);background:rgba(255,255,255,.05);box-shadow:var(--inset);user-select:none}
+
+    .viewport{
+      margin-top:10px;
+      border-radius:var(--r2);
+      border:1px solid var(--stroke);
+      background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.04));
+      box-shadow:var(--shadow2);
+      padding:12px;
+      min-height:210px;
+    }
+    .scroller{max-height:280px;overflow:auto;padding-right:8px;scroll-behavior:smooth}
+    .scroller::-webkit-scrollbar{width:10px;height:10px}
+    .scroller::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:999px}
+    [data-theme="light"] .scroller::-webkit-scrollbar-thumb{background:rgba(10,18,32,.15)}
+    .text{font-family:var(--mono);font-size:18px;line-height:1.6;white-space:pre-wrap;word-break:break-word}
+    .ch{display:inline-block;padding:0 .5px;border-radius:6px}
+    .pending{color:var(--muted)}
+    .correct{color:rgba(10,18,32,.92);background:color-mix(in srgb,var(--good) 75%, transparent)}
+    .incorrect{color:rgba(10,18,32,.92);background:color-mix(in srgb,var(--bad) 75%, transparent)}
+    .caret{position:relative}
+    .caret::after{
+      content:""; position:absolute; left:-1px; top:.05em; width:2px; height:1.25em;
+      border-radius:2px; background:rgba(96,165,250,.95);
+      animation:blink 1.05s steps(1) infinite;
+    }
+    @keyframes blink{50%{opacity:0}}
+
+    .toast{
+      margin-top:10px;
+      display:none;
+      border-radius:14px;
+      border:1px solid var(--stroke);
+      background:rgba(255,255,255,.05);
+      padding:10px 12px;
+      color:var(--muted);
+      font-size:13px; line-height:1.35;
+    }
+    .toast.show{display:block}
+    .toast strong{color:var(--text)}
+
+    /* ===== Right HUD ===== */
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .tile{border-radius:14px;border:1px solid var(--stroke);background:rgba(255,255,255,.05);box-shadow:var(--inset);padding:10px}
+    .tile .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.25px}
+    .tile .v{margin-top:2px;font-weight:800;font-size:18px}
+    .tile .s{margin-top:2px;font-size:11px;color:rgba(255,255,255,.50)}
+    [data-theme="light"] .tile .s{color:rgba(10,18,32,.50)}
+
+    /* ===== Mode buttons ===== */
+    .modes{display:grid;gap:10px}
+    .modeBtn{text-align:left;display:grid;gap:3px;min-height:56px;border-radius:16px}
+    .modeBtn .t{font-size:14px;font-weight:800}
+    .modeBtn .d{font-size:12px;color:var(--muted);line-height:1.2}
+    .modeBtn[data-active="true"]{background:linear-gradient(180deg,rgba(96,165,250,.24),rgba(167,139,250,.14));border-color:rgba(96,165,250,.35)}
+
+    /* ===== On-screen keyboard (simple, not huge 3D) ===== */
+    .kbd{display:grid;gap:8px}
+    .kbdRow{display:grid;gap:6px}
+    .kbdRow[data-cols="10"]{grid-template-columns:repeat(10,1fr)}
+    .kbdRow[data-cols="11"]{grid-template-columns:repeat(11,1fr)}
+    .kbdRow[data-cols="12"]{grid-template-columns:repeat(12,1fr)}
+    .kbdKey{
+      min-height:42px;border-radius:14px;
+      border:1px solid var(--stroke2);
+      background:rgba(255,255,255,.06);
+      box-shadow:var(--inset);
+      font-family:var(--mono);font-size:12px;color:var(--muted);
+      cursor:pointer; -webkit-tap-highlight-color:transparent;
+      transition:filter .12s ease, transform .12s ease;
+    }
+    .kbdKey:active{transform:translateY(1px)}
+    .kbdKey[data-hot="true"]{background:rgba(96,165,250,.40);color:rgba(10,18,32,.92);border-color:rgba(255,255,255,.22)}
+    .kbdKey[data-warn="true"]{background:rgba(251,191,36,.40);color:rgba(10,18,32,.92);border-color:rgba(255,255,255,.22)}
+    .wide2{grid-column:span 2}
+    .space{grid-column:span 6}
+
+    /* ===== Footer controls ===== */
+    footer{display:grid;gap:12px}
+    .controlsGrid{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:12px;align-items:end}
+    @media (max-width:920px){.controlsGrid{grid-template-columns:1fr}}
+    .field{display:grid;gap:6px;margin-bottom:12px}
+    .field label{font-size:12px;color:var(--muted)}
+    .select,.textarea{
+      width:100%;min-height:var(--tap);
+      padding:10px 12px;border-radius:14px;
+      border:1px solid var(--stroke2);
+      background:rgba(255,255,255,.06);color:var(--text);
+      box-shadow:var(--inset);outline:none;
+      font-family:var(--font);
+    }
+    .select:focus,.textarea:focus{border-color:rgba(96,165,250,.6);box-shadow:var(--inset),0 0 0 3px rgba(96,165,250,.2)}
+    .textarea{min-height:110px;resize:vertical;font-family:var(--mono);font-size:12.5px;line-height:1.45}
+
+    .tog{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .toggle{display:inline-flex;gap:10px;align-items:center;padding:8px 10px;border-radius:999px;border:1px solid var(--stroke);background:rgba(255,255,255,.05);box-shadow:var(--inset);min-height:42px;user-select:none}
+    .toggle input{width:18px;height:18px}
+
+    /* ===== Overlay onboarding ===== */
+    .overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:18px;z-index:50;
+      background:rgba(0,0,0,.55)}
+    [data-theme="light"] .overlay{background:rgba(10,18,32,.45)}
+    .overlay.show{display:flex}
+    .modal{width:min(980px,100%);border-radius:22px;border:1px solid var(--stroke2);
+      background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.06));
+      box-shadow:var(--shadow);overflow:hidden}
+    .modalTop{padding:18px 18px 0;display:grid;gap:10px}
+    .modalTop h2{margin:0;font-size:20px}
+    .modalTop p{margin:0;color:var(--muted);line-height:1.45;font-size:13.5px}
+    .modalGrid{padding:14px 18px 18px;display:grid;grid-template-columns:1.2fr .8fr;gap:14px}
+    @media (max-width:920px){.modalGrid{grid-template-columns:1fr}}
+    .bigChoices{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    @media (max-width:560px){.bigChoices{grid-template-columns:1fr}}
+    .bigChoice{text-align:left;min-height:88px;border-radius:18px}
+    .bigChoice .t{font-size:15px;font-weight:900}
+    .bigChoice .d{font-size:12.5px;color:var(--muted);line-height:1.25}
+    .callout{border-radius:18px;border:1px solid var(--stroke);background:rgba(255,255,255,.05);box-shadow:var(--inset);padding:12px;color:var(--muted);font-size:13px;line-height:1.4}
+    .tiny{font-size:12px;color:rgba(255,255,255,.52);line-height:1.35}
+    [data-theme="light"] .tiny{color:rgba(10,18,32,.52)}
+
+    /* Capture input hidden */
+    #capture{position:absolute;opacity:0;pointer-events:none;height:0;width:0}
+  </style>
+</head>
+
+<body data-theme="dark">
+  <input id="capture" autocomplete="off" autocapitalize="off" spellcheck="false" />
+
+  <!-- Onboarding -->
+  <div class="overlay show" id="overlay" role="dialog" aria-modal="true" aria-label="Onboarding">
+    <div class="modal">
+      <div class="modalTop">
+        <div class="brand">
+          <div class="logo" aria-hidden="true"></div>
+          <div class="title">
+            <h2>Typing Tutor</h2>
+            <p>Choose a mode, then press <strong>Enter</strong>. Tap the text card to focus on mobile.</p>
+          </div>
+        </div>
+      </div>
+      <div class="modalGrid">
+        <div>
+          <div class="bigChoices" id="onboardChoices" aria-label="Practice modes"></div>
+          <div style="margin-top:12px;">
+            <div class="row">
+              <button class="btn btnPrimary" id="btnEnterApp" type="button">Enter</button>
+              <button class="btn btnGhost" id="btnCloseOverlay" type="button">Close</button>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="callout">
+            <strong>How to use</strong><br/>
+            • Start → type exactly what you see<br/>
+            • Backspace to correct<br/>
+            • Skip adds a small penalty<br/><br/>
+            <strong>Smart difficulty</strong><br/>
+            Each mode increases complexity if your WPM + accuracy improve.
+          </div>
+          <div class="callout" style="margin-top:10px;">
+            <strong>UiPath integration</strong><br/>
+            Sends results via <code>window.postMessage</code> after each session.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="app" id="app">
+    <header>
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div class="title">
+          <h1>Typing Tutor</h1>
+          <div class="sub">Offline • Vanilla JS • UiPath Apps HTMLControl</div>
+        </div>
+      </div>
+      <div class="topActions">
+        <button class="btn btnGhost" id="btnShowOnboarding" type="button">Onboarding</button>
+        <button class="btn btnGhost" id="btnFocus" type="button">Focus</button>
+        <button class="btn btnGhost" id="btnTheme" type="button">Theme</button>
+      </div>
+    </header>
+
+    <main>
+      <!-- LEFT -->
+      <section class="card" aria-label="Practice">
+        <div class="cardHead">
+          <div class="label">
+            <span>Practice</span>
+            <span class="pill" id="modePill">Mode: Email & Work Chat</span>
+            <span class="pill" id="difficultyPill">Difficulty: 1/5</span>
+          </div>
+          <span class="pill" id="statusPill">Idle</span>
+        </div>
+        <div class="cardBody">
+          <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between;align-items:center">
+            <div class="hint" id="hintText">
+              Tap the text card to focus. Type with keyboard or use the on-screen keys.
+            </div>
+            <div class="chips">
+              <span class="chip" id="sessionChip">Session: Timed 60s</span>
+              <span class="chip" id="targetChip">Target: 35 WPM</span>
+            </div>
+          </div>
+
+          <div class="viewport" id="textViewport" tabindex="0" role="button" aria-label="Tap to focus typing input">
+            <div class="scroller" id="textScroller">
+              <div class="text" id="practiceText" aria-label="Text to type"></div>
+            </div>
+            <div class="toast" id="mistakeToast" role="status" aria-live="polite"></div>
+          </div>
+
+          <div class="card" style="margin-top:12px;box-shadow:var(--shadow2);border-radius:var(--r2)">
+            <div class="cardHead" style="padding:10px 10px 8px">
+              <div class="label">
+                <span>Keyboard</span>
+                <span class="pill" id="nextKeyPill">Next: —</span>
+              </div>
+              <span class="pill">Tap keys (mobile) • Hardware OK</span>
+            </div>
+            <div class="cardBody" style="padding:10px">
+              <div class="kbd" id="keyboard" aria-label="On-screen keyboard"></div>
+              <div class="tiny" style="margin-top:8px;">
+                Highlights the next expected character. If you make a mistake, it warns.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT -->
+      <aside style="display:grid;gap:12px">
+        <section class="card" aria-label="Dashboard">
+          <div class="cardHead">
+            <div class="label"><span>Dashboard</span><span class="pill" id="controlPill">Ready</span></div>
+            <span class="pill" id="bestPill">Best: —</span>
+          </div>
+          <div class="cardBody">
+            <div class="grid2" id="hudGrid"></div>
+            <div class="field" style="margin-top:12px;margin-bottom:0">
+              <label for="livePost">Live postMessage updates</label>
+              <div class="toggle">
+                <input id="livePost" type="checkbox"/>
+                <span class="tiny">Send <code>typingLive</code> every few seconds</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card" aria-label="Mode selector">
+          <div class="cardHead">
+            <div class="label"><span>Practice modes</span></div>
+            <span class="pill" id="timePill">Time: 00:00</span>
+          </div>
+          <div class="cardBody">
+            <div class="modes" id="modeButtons"></div>
+
+            <div id="customBox" style="display:none;margin-top:12px;">
+              <div class="field">
+                <label for="customText">Custom text</label>
+                <textarea class="textarea" id="customText" placeholder="Paste your own paragraph here..."></textarea>
+              </div>
+              <button class="btn btnGhost" id="btnUseCustom" type="button">Use Custom Text</button>
+            </div>
+          </div>
+        </section>
+      </aside>
+    </main>
+
+    <!-- Bottom controls -->
+    <footer>
+      <section class="card" aria-label="Controls">
+        <div class="cardHead">
+          <div class="label"><span>Controls</span></div>
+          <span class="pill" id="timePill2">Time: 00:00</span>
+        </div>
+        <div class="cardBody">
+          <div class="controlsGrid">
+            <div>
+              <div class="row">
+                <button class="btn btnPrimary" id="btnStart" type="button">Start</button>
+                <button class="btn btnGhost" id="btnPause" type="button">Pause</button>
+                <button class="btn btnDanger" id="btnRestart" type="button">Restart</button>
+              </div>
+              <div class="row" style="margin-top:10px">
+                <button class="btn btnGhost" id="btnSkip" type="button">Skip (Penalty)</button>
+                <button class="btn btnGhost" id="btnNextText" type="button">Next Text</button>
+              </div>
+            </div>
+
+            <div>
+              <div class="field">
+                <label for="sessionKind">Session type</label>
+                <select class="select" id="sessionKind">
+                  <option value="timed">Timed test</option>
+                  <option value="paragraph">By paragraph</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="preset">Duration / paragraphs</label>
+                <select class="select" id="preset"></select>
+              </div>
+            </div>
+
+            <div>
+              <div class="tog">
+                <label class="toggle"><input id="soundToggle" type="checkbox"/> <span>Sound</span></label>
+                <label class="toggle"><input id="strictToggle" type="checkbox" checked/> <span>Strict</span></label>
+              </div>
+              <div class="tiny" style="margin-top:10px">
+                Strict: must match each character to move forward. Turn off for a looser flow.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </footer>
+  </div>
+
+  <script>
+    /* ============================================================
+       FIXES vs previous version (why yours didn't work):
+       - Removed duplicate function names (loadFreshText was defined twice)
+       - Removed duplicate element IDs (timePill was duplicated)
+       - Simplified 3D: no perspective transforms everywhere
+       - Kept logic compact + reliable inside UiPath WebView
+       ============================================================ */
+
+    /* =========================
+       CONFIG
+       ========================= */
+    const CONFIG = {
+      durationPresetsSec: [30, 60, 120],
+      paragraphPresets: [1, 3, 5],
+      liveUpdateEveryMs: 3500,
+      skipPenaltyErrors: 2,
+      difficultyMax: 5,
+      targetWpmByDifficulty: [22, 28, 35, 42, 50],
+      promoteIf: { minAccuracy: 96, minWpmOverTarget: -2 },
+
+      packs: {
+        email: [
+`Hi team,
+Just a quick update: I finished the draft and shared it for review.
+Thanks,
+Faiz`,
+`Hello,
+Following up on the action items from yesterday:
+1) Confirm the schedule
+2) Share the notes
+Please let me know if anything is missing.`,
+`Good morning,
+Can we move the meeting to 2:30 PM? I’ll send a calendar invite.
+Also, I’ll attach the latest status report once I finalize the table.`,
+`Hi everyone,
+Thanks for the discussion today. Key points:
+- Dependencies: API access and test data
+- Risks: timeline overlap with UAT
+Next steps: align on owners and due dates by EOD.`,
+`Hello team,
+Per our agreement, please review the updated proposal (v3.2) and reply with approvals by 17:00.
+If you have concerns, share them with examples and suggested wording.`
+        ],
+        forms: [
+`First name: Anika
+Last name: Sharma
+Date: 12/03/2025`,
+`Address line 1: 18 Lake View Road
+City: Pune
+Postal code: 411001`,
+`Employee ID: EMP-10492
+Start date (YYYY-MM-DD): 2025-01-15
+Manager: R. Iyer`,
+`Form check:
+- Phone: +91 98765 43210
+- Email: anika.sharma@example.com
+- PAN: ABCDE1234F
+Please verify formats before submit.`,
+`Data entry prompt:
+Enter "YES" to confirm, then type the reference ID exactly:
+REF-7A3F-19X2
+If you mistype, use Backspace to correct before continuing.`
+        ],
+        support: [
+`Hi,
+Thanks for reaching out. I can help with that.`,
+`Hello,
+Sorry for the inconvenience. Please try restarting the application and sign in again.`,
+`Thanks for the details.
+To troubleshoot, please:
+1) Clear cache
+2) Reopen the app
+3) Retry the action
+Let me know what you observe.`,
+`Apologies for the delay.
+I reviewed your ticket and found the configuration mismatch. Update the setting and retry.`,
+`Thanks for your patience.
+We deployed a fix and your service should be stable now. If you see the issue again, reply with timestamp and user ID.`
+        ],
+        coding: [
+`const name = "Faiz";
+let count = 0;`,
+`function add(a, b) { return a + b; }
+console.log(add(2, 3));`,
+`for (let i = 0; i < 5; i++) {
+  if (i % 2 === 0) console.log("even:", i);
+}`,
+`def normalize(text):
+    return text.strip().lower()
+
+print(normalize("  Hello  "))`,
+`try {
+  const obj = JSON.parse(payload);
+  if (!obj || !obj.id) throw new Error("Missing id");
+} catch (e) {
+  console.error("Parse failed:", e.message);
+}`
+        ],
+        symbols: [
+`12345 67890 24680 13579`,
+`% # @ _ - ( ) [ ] { }`,
+`Invoice: INV-2049 | Total: 1,249.50 | Tax: 18%`,
+`User: faiz_khan@company.com | TempPwd: A9#t_4Q!`,
+`Symbols drill: ~!@#$%^&*()_+  -=[]\\{}|;':",./<>?`
+        ]
+      }
+    };
+
+    /* =========================
+       DOM helpers
+       ========================= */
+    const $ = (id) => document.getElementById(id);
+
+    const overlay = $("overlay");
+    const onboardChoices = $("onboardChoices");
+    const btnEnterApp = $("btnEnterApp");
+    const btnCloseOverlay = $("btnCloseOverlay");
+    const btnShowOnboarding = $("btnShowOnboarding");
+
+    const btnTheme = $("btnTheme");
+    const btnFocus = $("btnFocus");
+
+    const modeButtons = $("modeButtons");
+    const customBox = $("customBox");
+    const customText = $("customText");
+    const btnUseCustom = $("btnUseCustom");
+
+    const modePill = $("modePill");
+    const difficultyPill = $("difficultyPill");
+    const statusPill = $("statusPill");
+    const controlPill = $("controlPill");
+    const bestPill = $("bestPill");
+    const sessionChip = $("sessionChip");
+    const targetChip = $("targetChip");
+
+    const textViewport = $("textViewport");
+    const textScroller = $("textScroller");
+    const practiceTextEl = $("practiceText");
+    const mistakeToast = $("mistakeToast");
+
+    const keyboardEl = $("keyboard");
+    const nextKeyPill = $("nextKeyPill");
+
+    const hudGrid = $("hudGrid");
+
+    const btnStart = $("btnStart");
+    const btnPause = $("btnPause");
+    const btnRestart = $("btnRestart");
+    const btnSkip = $("btnSkip");
+    const btnNextText = $("btnNextText");
+
+    const sessionKindSel = $("sessionKind");
+    const presetSel = $("preset");
+
+    const soundToggle = $("soundToggle");
+    const strictToggle = $("strictToggle");
+    const livePost = $("livePost");
+
+    const timePillTop = $("timePill");   // right panel
+    const timePillBottom = $("timePill2"); // footer
+    const capture = $("capture");
+
+    /* =========================
+       Modes
+       ========================= */
+    const MODES = [
+      { id: "email",  name: "Email & Work Chat", desc: "Greetings, follow-ups, meeting notes." },
+      { id: "forms",  name: "Forms & Data Entry", desc: "Names, addresses, IDs, dates." },
+      { id: "support",name: "Customer Support", desc: "Apologies, troubleshooting steps." },
+      { id: "coding", name: "Coding Snippets", desc: "JS/Python lines, punctuation." },
+      { id: "symbols",name: "Numbers & Symbols", desc: "Digits + symbols: %, #, @, _, ()." },
+      { id: "custom", name: "Custom Text", desc: "Paste your own content." }
+    ];
+
+    /* =========================
+       State
+       ========================= */
+    const difficulty = Object.fromEntries(MODES.map(m => [m.id, 1]));
+    const bestScores = {}; // `${mode}|${kind}` -> {wpm, accuracy}
+    const weakChars = Object.fromEntries(MODES.map(m => [m.id, {}])); // per mode
+
+    const session = {
+      active:false, paused:false,
+      mode:"email",
+      kind:"timed", preset:60,
+      text:"", expected:[], idx:0,
+      startedAt:0, pausedAt:0, totalPausedMs:0,
+      typed:0, correct:0, errors:0, streak:0,
+      charRes:[], // 1 correct, -1 incorrect, 0 pending
+      raf:0, lastLivePost:0,
+      lastMistake:null
+    };
+
+    /* =========================
+       Audio (minimal)
+       ========================= */
+    const SFX = (() => {
+      let ctx = null;
+      function ensure(){
+        if (!soundToggle.checked) return null;
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return null;
+        if (!ctx) ctx = new AudioCtx();
+        return ctx;
+      }
+      function blip(kind){
+        const c = ensure(); if (!c) return;
+        const now = c.currentTime;
+        const o = c.createOscillator();
+        const g = c.createGain();
+        const p = (kind==="err")
+          ? {f0:180,f1:120,d:0.06,g:0.06}
+          : (kind==="win")
+          ? {f0:660,f1:880,d:0.08,g:0.05}
+          : {f0:220,f1:180,d:0.035,g:0.04};
+
+        o.type="triangle";
+        o.frequency.setValueAtTime(p.f0, now);
+        o.frequency.exponentialRampToValueAtTime(p.f1, now+p.d);
+        g.gain.setValueAtTime(0.0001, now);
+        g.gain.exponentialRampToValueAtTime(p.g, now+0.01);
+        g.gain.exponentialRampToValueAtTime(0.0001, now+p.d);
+        o.connect(g).connect(c.destination);
+        o.start(now); o.stop(now+p.d+0.02);
+      }
+      return { blip };
+    })();
+
+    /* =========================
+       Utils
+       ========================= */
+    const clamp = (n,a,b)=>Math.max(a,Math.min(b,n));
+    const nowMs = ()=>performance.now();
+    const fmt = (sec)=>{
+      sec = Math.max(0, Math.floor(sec));
+      const m = Math.floor(sec/60), s = sec%60;
+      return String(m).padStart(2,"0")+":"+String(s).padStart(2,"0");
+    };
+    const accPct = ()=> session.typed ? Math.round((session.correct/session.typed)*100) : 100;
+    const wpmVal = ()=>{
+      const e = elapsedMs()/1000;
+      if (e<=0) return 0;
+      return Math.round(((session.correct/5)/e)*60);
+    };
+    const elapsedMs = ()=>{
+      if (!session.startedAt) return 0;
+      const base = (session.paused ? session.pausedAt : nowMs()) - session.startedAt;
+      return Math.max(0, base - session.totalPausedMs);
+    };
+    const remainingSec = ()=>{
+      if (session.kind!=="timed") return 0;
+      return Math.max(0, session.preset - (elapsedMs()/1000));
+    };
+    const iso = ()=> new Date().toISOString();
+    function post(payload){
+      try{ window.parent && window.parent.postMessage(payload,"*"); }catch(_){}
+    }
+    function esc(s){
+      return String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
+    }
+    const labelKey = (ch)=> ch===" " ? "Space" : ch==="\n" ? "Enter" : ch;
+
+    function getTargetWpm(mode){
+      const d = clamp(difficulty[mode]||1,1,5);
+      return CONFIG.targetWpmByDifficulty[d-1] || 35;
+    }
+    function pickText(mode){
+      if (mode==="custom") return (customText.value||"").trim();
+      const pack = CONFIG.packs[mode] || CONFIG.packs.email;
+      const d = clamp(difficulty[mode]||1,1,5);
+      return pack[d-1] || pack[0];
+    }
+    function buildParagraphText(mode, n){
+      const pack = mode==="custom" ? null : (CONFIG.packs[mode] || CONFIG.packs.email);
+      const base = clamp(difficulty[mode]||1,1,5);
+      const parts = [];
+      for (let i=0;i<n;i++){
+        const d = clamp(base + (i>0?1:0), 1, 5);
+        parts.push(mode==="custom" ? (customText.value||"").trim() : (pack[d-1] || pack[0]));
+      }
+      return parts.filter(Boolean).join("\n\n");
+    }
+
+    /* =========================
+       Rendering
+       ========================= */
+    const HUD = [
+      ["WPM","hud_wpm","Words/min"],
+      ["Accuracy","hud_acc","Correct/typed"],
+      ["Errors","hud_err","Mistakes"],
+      ["Time","hud_time","Elapsed/Left"],
+      ["Streak","hud_streak","Correct in a row"],
+      ["Best","hud_best","Mode best"]
+    ];
+
+    function initHUD(){
+      hudGrid.innerHTML="";
+      for (const [k,id,s] of HUD){
+        const t = document.createElement("div");
+        t.className="tile";
+        t.innerHTML = `<div class="k">${k}</div><div class="v" id="${id}">—</div><div class="s">${s}</div>`;
+        hudGrid.appendChild(t);
+      }
+    }
+
+    function setToast(m){
+      if (!m){ mistakeToast.classList.remove("show"); mistakeToast.textContent=""; return; }
+      mistakeToast.classList.add("show");
+      mistakeToast.innerHTML = `Expected <strong>${esc(labelKey(m.expected))}</strong> but got <strong>${esc(labelKey(m.got))}</strong>.`;
+    }
+
+    function setText(newText){
+      session.text = (newText||"").replace(/\r\n/g,"\n").trim();
+      if (!session.text) session.text = "Paste custom text, or choose a built-in mode to begin.";
+      session.expected = Array.from(session.text);
+      session.idx = 0;
+
+      session.typed=0; session.correct=0; session.errors=0; session.streak=0;
+      session.charRes = new Array(session.expected.length).fill(0);
+      session.lastMistake=null;
+      setToast(null);
+
+      // Render spans
+      const frag = document.createDocumentFragment();
+      for (let i=0;i<session.expected.length;i++){
+        const sp = document.createElement("span");
+        sp.className="ch pending";
+        sp.dataset.i = String(i);
+        sp.textContent = session.expected[i];
+        frag.appendChild(sp);
+      }
+      practiceTextEl.innerHTML="";
+      practiceTextEl.appendChild(frag);
+      paintCaret();
+      updateKeyboardHighlight(false);
+      updateHUD();
+      scrollCaret();
+      updateChips();
+    }
+
+    function paintCaret(){
+      const kids = practiceTextEl.children;
+      for (let i=0;i<kids.length;i++){
+        kids[i].classList.toggle("caret", i===session.idx);
+      }
+    }
+
+    function mark(i, cls){
+      const el = practiceTextEl.querySelector(`.ch[data-i="${i}"]`);
+      if (!el) return;
+      el.classList.remove("pending","correct","incorrect");
+      el.classList.add(cls);
+    }
+
+    function scrollCaret(){
+      const el = practiceTextEl.querySelector(".ch.caret");
+      if (!el) return;
+      const cr = el.getBoundingClientRect();
+      const sr = textScroller.getBoundingClientRect();
+      if (cr.top < sr.top + 30 || cr.bottom > sr.bottom - 30){
+        el.scrollIntoView({block:"center", behavior:"smooth"});
+      }
+    }
+
+    function updateChips(){
+      modePill.textContent = `Mode: ${MODES.find(m=>m.id===session.mode)?.name || session.mode}`;
+      difficultyPill.textContent = `Difficulty: ${difficulty[session.mode]||1}/5`;
+      sessionChip.textContent = session.kind==="timed" ? `Session: Timed ${session.preset}s` : `Session: Paragraph ×${session.preset}`;
+      targetChip.textContent = `Target: ${getTargetWpm(session.mode)} WPM`;
+    }
+
+    function updateHUD(){
+      const eSec = elapsedMs()/1000;
+      const wpm = wpmVal();
+      const acc = accPct();
+      const left = remainingSec();
+      const bestKey = `${session.mode}|${session.kind}`;
+      const b = bestScores[bestKey];
+
+      $("hud_wpm").textContent = session.active ? String(wpm) : "—";
+      $("hud_acc").textContent = session.active ? `${acc}%` : "—";
+      $("hud_err").textContent = session.active ? String(session.errors) : "—";
+      $("hud_time").textContent = session.active
+        ? (session.kind==="timed" ? `${fmt(session.preset-left)}/${fmt(session.preset)}` : fmt(eSec))
+        : "—";
+      $("hud_streak").textContent = session.active ? String(session.streak) : "—";
+      $("hud_best").textContent = b ? `${b.wpm}wpm` : "—";
+
+      const leftText = session.active ? (session.kind==="timed" ? `Time: ${fmt(left)}` : `Time: ${fmt(eSec)}`) : "Time: 00:00";
+      timePillTop.textContent = leftText;
+      timePillBottom.textContent = leftText;
+
+      bestPill.textContent = b ? `Best: ${b.wpm} WPM • ${b.accuracy}%` : "Best: —";
+      statusPill.textContent = session.active ? (session.paused ? "Paused" : "Active") : "Idle";
+    }
+
+    /* =========================
+       Keyboard (on-screen)
+       ========================= */
+    const KEY_LAYOUT = [
+      ["1","2","3","4","5","6","7","8","9","0"],
+      ["q","w","e","r","t","y","u","i","o","p"],
+      ["a","s","d","f","g","h","j","k","l",";","'"],
+      ["z","x","c","v","b","n","m",",",".","/"],
+      ["Backspace","Space","Enter"]
+    ];
+
+    function initKeyboard(){
+      keyboardEl.innerHTML="";
+      for (let r=0;r<4;r++){
+        const row = document.createElement("div");
+        row.className="kbdRow";
+        row.dataset.cols = String(KEY_LAYOUT[r].length);
+        for (const k of KEY_LAYOUT[r]){
+          row.appendChild(makeKey(k));
+        }
+        keyboardEl.appendChild(row);
+      }
+      const row = document.createElement("div");
+      row.className="kbdRow"; row.dataset.cols="10";
+      const back = makeKey("Backspace"); back.classList.add("wide2");
+      const space = makeKey("Space"); space.classList.add("space");
+      const enter = makeKey("Enter"); enter.classList.add("wide2");
+      row.appendChild(back); row.appendChild(space); row.appendChild(enter);
+      keyboardEl.appendChild(row);
+    }
+
+    function makeKey(label){
+      const b = document.createElement("button");
+      b.type="button"; b.className="kbdKey";
+      b.dataset.key = label;
+      b.textContent = label;
+      b.setAttribute("aria-label", `Key ${label}`);
+      b.addEventListener("click", ()=>{
+        focusCapture();
+        if (label==="Backspace") handleBackspace();
+        else if (label==="Enter") handleChar("\n");
+        else if (label==="Space") handleChar(" ");
+        else handleChar(label);
+      });
+      return b;
+    }
+
+    function updateKeyboardHighlight(warn){
+      const next = session.expected[session.idx] ?? "";
+      nextKeyPill.textContent = `Next: ${labelKey(next) || "—"}`;
+
+      const keys = keyboardEl.querySelectorAll(".kbdKey");
+      keys.forEach(k=>{k.dataset.hot="false";k.dataset.warn="false";});
+
+      let target = next;
+      if (target===" ") target="Space";
+      if (target==="\n") target="Enter";
+      if (target.length===1 && /[A-Z]/.test(target)) target=target.toLowerCase();
+
+      keys.forEach(k=>{
+        if (k.dataset.key===target){
+          k.dataset.hot="true";
+          if (warn) k.dataset.warn="true";
+        }
+      });
+    }
+
+    /* =========================
+       Focus + session
+       ========================= */
+    function focusCapture(){ try{ capture.focus(); }catch(_){} }
+
+    function loadText(){
+      // reset drill concept (kept simple)
+      session.lastMistake = null;
+      setToast(null);
+
+      let t = "";
+      if (session.kind==="paragraph") t = buildParagraphText(session.mode, session.preset);
+      else t = pickText(session.mode);
+
+      setText(t);
+    }
+
+    function start(){
+      if (session.active) return;
+
+      if (session.mode==="custom" && !(customText.value||"").trim()){
+        setToast({expected:"Custom text", got:"empty"});
+        overlay.classList.add("show");
+        return;
+      }
+
+      session.active = true;
+      session.paused = false;
+      session.startedAt = nowMs();
+      session.totalPausedMs = 0;
+      session.lastLivePost = 0;
+
+      controlPill.textContent = "Typing…";
+      btnPause.textContent = "Pause";
+      focusCapture();
+      tick();
+      updateHUD();
+    }
+
+    function pauseResume(){
+      if (!session.active) return;
+      if (!session.paused){
+        session.paused = true;
+        session.pausedAt = nowMs();
+        controlPill.textContent = "Paused";
+        btnPause.textContent = "Resume";
+        cancelAnimationFrame(session.raf); session.raf=0;
+      } else {
+        session.paused = false;
+        session.totalPausedMs += (nowMs() - session.pausedAt);
+        controlPill.textContent = "Typing…";
+        btnPause.textContent = "Pause";
+        focusCapture();
+        tick();
+      }
+      updateHUD();
+    }
+
+    function end(completed, reason){
+      cancelAnimationFrame(session.raf); session.raf=0;
+
+      const eSec = elapsedMs()/1000;
+      const wpm = wpmVal();
+      const acc = accPct();
+
+      // best
+      const key = `${session.mode}|${session.kind}`;
+      const prev = bestScores[key];
+      if (!prev || wpm>prev.wpm || (wpm===prev.wpm && acc>prev.accuracy)){
+        bestScores[key] = { wpm, accuracy: acc };
+      }
+
+      // difficulty adapt (simple)
+      if (session.mode!=="custom"){
+        const target = getTargetWpm(session.mode);
+        const promote = acc >= CONFIG.promoteIf.minAccuracy && wpm >= (target + CONFIG.promoteIf.minWpmOverTarget);
+        if (promote) difficulty[session.mode] = clamp((difficulty[session.mode]||1)+1,1,CONFIG.difficultyMax);
+        else if (acc < 86 && (difficulty[session.mode]||1)>1) difficulty[session.mode] = (difficulty[session.mode]||1)-1;
+      }
+
+      post({
+        type:"typingStats",
+        wpm, accuracy: acc, errors: session.errors,
+        mode: MODES.find(m=>m.id===session.mode)?.name || session.mode,
+        modeId: session.mode,
+        duration: session.kind==="timed" ? session.preset : Math.round(eSec),
+        sessionKind: session.kind,
+        completed: !!completed,
+        timestamp: iso(),
+        reason: reason || ""
+      });
+
+      session.active=false; session.paused=false;
+      session.startedAt=0; session.totalPausedMs=0;
+      controlPill.textContent = completed ? "Session complete" : "Ready";
+      btnPause.textContent="Pause";
+      if (completed) SFX.blip("win");
+
+      updateChips();
+      updateHUD();
+      updateKeyboardHighlight(false);
+    }
+
+    function finishIfNeeded(){
+      if (!session.active || session.paused) return;
+
+      if (session.kind==="timed"){
+        if (remainingSec() <= 0) end(true, "time");
+      } else {
+        if (session.idx >= session.expected.length) end(true, "paragraphComplete");
+      }
+    }
+
+    function handleBackspace(){
+      if (!session.active || session.paused) return;
+      if (session.idx <= 0) return;
+
+      session.idx -= 1;
+
+      // adjust typed
+      session.typed = Math.max(0, session.typed - 1);
+
+      // adjust counts using charRes
+      const prev = session.charRes[session.idx];
+      if (prev === 1) session.correct = Math.max(0, session.correct - 1);
+      if (prev === -1) session.errors = Math.max(0, session.errors - 1);
+
+      session.charRes[session.idx] = 0;
+      mark(session.idx, "pending");
+      session.streak = 0;
+
+      setToast(null);
+      paintCaret();
+      updateKeyboardHighlight(false);
+      updateHUD();
+      scrollCaret();
+      SFX.blip("key");
+    }
+
+    function recordWeak(mode, expected){
+      weakChars[mode][expected] = (weakChars[mode][expected] || 0) + 1;
+    }
+
+    function handleChar(ch){
+      if (!session.active || session.paused) return;
+      if (session.idx >= session.expected.length) return;
+
+      const expected = session.expected[session.idx];
+      const strict = strictToggle.checked;
+      const ok = (ch === expected);
+
+      session.typed += 1;
+
+      if (ok){
+        session.correct += 1;
+        session.streak += 1;
+        session.charRes[session.idx] = 1;
+        mark(session.idx, "correct");
+        setToast(null);
+        SFX.blip("key");
+        session.idx += 1;
+        paintCaret();
+        updateKeyboardHighlight(false);
+        scrollCaret();
+      } else {
+        session.errors += 1;
+        session.streak = 0;
+        session.charRes[session.idx] = -1;
+        mark(session.idx, "incorrect");
+        recordWeak(session.mode, expected);
+        setToast({expected, got: ch});
+        updateKeyboardHighlight(true);
+        SFX.blip("err");
+
+        if (!strict){
+          session.idx += 1;
+          paintCaret();
+          updateKeyboardHighlight(false);
+          scrollCaret();
+        }
+      }
+
+      updateHUD();
+      finishIfNeeded();
+    }
+
+    function skip(){
+      if (!session.active || session.paused) return;
+
+      session.errors += CONFIG.skipPenaltyErrors;
+      session.streak = 0;
+      setToast({expected:"Current word", got:"skipped"});
+
+      while (session.idx < session.expected.length){
+        const e = session.expected[session.idx];
+        mark(session.idx, "incorrect");
+        recordWeak(session.mode, e);
+        session.charRes[session.idx] = -1;
+        session.idx += 1;
+        if (e===" " || e==="\n" || e==="\t") break;
+      }
+      paintCaret();
+      updateKeyboardHighlight(true);
+      updateHUD();
+      scrollCaret();
+      finishIfNeeded();
+    }
+
+    function tick(){
+      if (!session.active || session.paused) return;
+
+      // optional live post (light)
+      if (livePost.checked){
+        const t = nowMs();
+        if (!session.lastLivePost || (t - session.lastLivePost) >= CONFIG.liveUpdateEveryMs){
+          session.lastLivePost = t;
+          post({
+            type:"typingLive",
+            wpm: wpmVal(),
+            accuracy: accPct(),
+            errors: session.errors,
+            timeLeft: session.kind==="timed" ? Math.ceil(remainingSec()) : 0,
+            streak: session.streak,
+            mode: MODES.find(m=>m.id===session.mode)?.name || session.mode,
+            modeId: session.mode,
+            timestamp: iso()
+          });
+        }
+      }
+
+      updateHUD();
+      finishIfNeeded();
+      session.raf = requestAnimationFrame(tick);
+    }
+
+    /* =========================
+       UI init
+       ========================= */
+    function initModes(){
+      modeButtons.innerHTML="";
+      onboardChoices.innerHTML="";
+      for (const m of MODES){
+        const b = document.createElement("button");
+        b.type="button"; b.className="btn modeBtn";
+        b.dataset.mode=m.id;
+        b.innerHTML = `<div class="t">${m.name}</div><div class="d">${m.desc}</div>`;
+        b.addEventListener("click", ()=>setMode(m.id));
+        modeButtons.appendChild(b);
+
+        const c = document.createElement("button");
+        c.type="button"; c.className="btn bigChoice";
+        c.dataset.mode=m.id;
+        c.innerHTML = `<div class="t">${m.name}</div><div class="d">${m.desc}</div>`;
+        c.addEventListener("click", ()=>{
+          setMode(m.id);
+          overlay.classList.remove("show");
+          focusCapture();
+        });
+        onboardChoices.appendChild(c);
+      }
+      refreshModeButtons();
+    }
+
+    function refreshModeButtons(){
+      [...modeButtons.children].forEach(btn=>{
+        btn.dataset.active = (btn.dataset.mode === session.mode) ? "true" : "false";
+      });
+    }
+
+    function setMode(modeId){
+      session.mode = modeId;
+      customBox.style.display = (modeId==="custom") ? "block" : "none";
+      refreshModeButtons();
+      updateChips();
+      loadText();
+      focusCapture();
+    }
+
+    function initPresets(){
+      function fillTimed(){
+        presetSel.innerHTML="";
+        for (const s of CONFIG.durationPresetsSec){
+          const o=document.createElement("option");
+          o.value=String(s); o.textContent=`${s} seconds`;
+          presetSel.appendChild(o);
+        }
+        presetSel.value=String(CONFIG.durationPresetsSec[1]||60);
+      }
+      function fillPara(){
+        presetSel.innerHTML="";
+        for (const n of CONFIG.paragraphPresets){
+          const o=document.createElement("option");
+          o.value=String(n); o.textContent=`${n} paragraph${n===1?"":"s"}`;
+          presetSel.appendChild(o);
+        }
+        presetSel.value=String(CONFIG.paragraphPresets[0]||1);
+      }
+
+      fillTimed();
+      session.kind = sessionKindSel.value;
+      session.preset = Number(presetSel.value);
+
+      sessionKindSel.addEventListener("change", ()=>{
+        session.kind = sessionKindSel.value;
+        if (session.kind==="timed") fillTimed(); else fillPara();
+        session.preset = Number(presetSel.value);
+        updateChips();
+        loadText();
+      });
+
+      presetSel.addEventListener("change", ()=>{
+        session.preset = Number(presetSel.value);
+        updateChips();
+        loadText();
+      });
+    }
+
+    /* =========================
+       Event wiring
+       ========================= */
+    function wire(){
+      btnStart.addEventListener("click", start);
+      btnPause.addEventListener("click", pauseResume);
+      btnRestart.addEventListener("click", ()=>{ end(false,"restart"); loadText(); });
+      btnSkip.addEventListener("click", skip);
+      btnNextText.addEventListener("click", ()=>{ end(false,"nextText"); loadText(); });
+
+      btnTheme.addEventListener("click", ()=>{
+        document.body.dataset.theme = (document.body.dataset.theme==="light") ? "dark" : "light";
+      });
+      btnFocus.addEventListener("click", focusCapture);
+
+      textViewport.addEventListener("click", focusCapture);
+      btnShowOnboarding.addEventListener("click", ()=>overlay.classList.add("show"));
+      btnCloseOverlay.addEventListener("click", ()=>overlay.classList.remove("show"));
+      btnEnterApp.addEventListener("click", ()=>{ overlay.classList.remove("show"); focusCapture(); });
+
+      btnUseCustom.addEventListener("click", ()=>{
+        if (session.mode==="custom"){ loadText(); focusCapture(); }
+      });
+
+      // hardware keyboard
+      window.addEventListener("keydown", (e)=>{
+        if (!session.active || session.paused) return;
+
+        if (e.key===" " || e.key==="Spacebar") e.preventDefault();
+
+        if (e.key==="Backspace"){ e.preventDefault(); handleBackspace(); return; }
+        if (e.key==="Enter"){ e.preventDefault(); handleChar("\n"); return; }
+        if (e.key.length===1){ handleChar(e.key); return; }
+
+        if (e.key==="Escape"){ pauseResume(); }
+      }, { passive:false });
+
+      // click outside modal to close
+      overlay.addEventListener("click",(e)=>{ if (e.target===overlay) overlay.classList.remove("show"); });
+
+      // mobile focus nudge
+      document.addEventListener("pointerdown",(e)=>{
+        const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
+        if (["select","option","textarea","input","button"].includes(tag)) return;
+        if (session.active && !session.paused) focusCapture();
+      });
+    }
+
+    function init(){
+      // HUD tiles
+      initHUD();
+
+      // keyboard
+      initKeyboard();
+
+      // modes
+      initModes();
+
+      // presets
+      initPresets();
+
+      // default mode
+      setMode("email");
+
+      // buttons/events
+      wire();
+
+      overlay.classList.add("show");
+      controlPill.textContent="Ready";
+      updateHUD();
+      focusCapture();
+    }
+
+    init();
+  </script>
+</body>
+</html>
